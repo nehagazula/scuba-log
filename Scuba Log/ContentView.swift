@@ -14,10 +14,7 @@ struct ContentView: View {
     @State private var showingNewEntryView = false
     
     var body: some View {
-        NavigationSplitView {
-            Text("Scuba Log")
-            .font(.largeTitle)
-            .padding()
+        NavigationView {
             List {
                 ForEach(entries) { entry in
                     NavigationLink {
@@ -43,8 +40,7 @@ struct ContentView: View {
                     .padding()
                 }
             }
-        } detail: {
-            Text("Select an item")
+            .navigationBarTitle("Scuba Log", displayMode: .large)
         }
         .sheet(isPresented: $showingNewEntryView) {
             NewEntryView(isPresented: $showingNewEntryView, addItem: addItem)
