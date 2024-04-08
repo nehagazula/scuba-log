@@ -12,9 +12,9 @@ import SwiftData
 struct Scuba_LogApp: App {
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
-            Item.self,
+            Entry.self,
         ])
-        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
+        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true) // change to false
 
         do {
             return try ModelContainer(for: schema, configurations: [modelConfiguration])
