@@ -9,12 +9,15 @@
 /* Begin PBXBuildFile section */
 		916A92CD2BC3C38A00C5DA50 /* Scuba_LogApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 916A92CC2BC3C38A00C5DA50 /* Scuba_LogApp.swift */; };
 		916A92CF2BC3C38A00C5DA50 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 916A92CE2BC3C38A00C5DA50 /* ContentView.swift */; };
-		916A92D12BC3C38A00C5DA50 /* Item.swift in Sources */ = {isa = PBXBuildFile; fileRef = 916A92D02BC3C38A00C5DA50 /* Item.swift */; };
+		916A92D12BC3C38A00C5DA50 /* Entry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 916A92D02BC3C38A00C5DA50 /* Entry.swift */; };
 		916A92D32BC3C38C00C5DA50 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 916A92D22BC3C38C00C5DA50 /* Assets.xcassets */; };
 		916A92D62BC3C38C00C5DA50 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 916A92D52BC3C38C00C5DA50 /* Preview Assets.xcassets */; };
 		916A92E02BC3C38C00C5DA50 /* Scuba_LogTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 916A92DF2BC3C38C00C5DA50 /* Scuba_LogTests.swift */; };
 		916A92EA2BC3C38D00C5DA50 /* Scuba_LogUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 916A92E92BC3C38D00C5DA50 /* Scuba_LogUITests.swift */; };
 		916A92EC2BC3C38D00C5DA50 /* Scuba_LogUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 916A92EB2BC3C38D00C5DA50 /* Scuba_LogUITestsLaunchTests.swift */; };
+		916A92F92BC3C46700C5DA50 /* NewEntryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 916A92F82BC3C46700C5DA50 /* NewEntryView.swift */; };
+		91CE64972BC4C545004E3733 /* TimeInterval+Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91CE64962BC4C545004E3733 /* TimeInterval+Constants.swift */; };
+		91CE64992BC4DBE0004E3733 /* EntryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91CE64982BC4DBE0004E3733 /* EntryView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -38,7 +41,7 @@
 		916A92C92BC3C38A00C5DA50 /* Scuba Log.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Scuba Log.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		916A92CC2BC3C38A00C5DA50 /* Scuba_LogApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Scuba_LogApp.swift; sourceTree = "<group>"; };
 		916A92CE2BC3C38A00C5DA50 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
-		916A92D02BC3C38A00C5DA50 /* Item.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Item.swift; sourceTree = "<group>"; };
+		916A92D02BC3C38A00C5DA50 /* Entry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Entry.swift; sourceTree = "<group>"; };
 		916A92D22BC3C38C00C5DA50 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		916A92D52BC3C38C00C5DA50 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		916A92DB2BC3C38C00C5DA50 /* Scuba LogTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Scuba LogTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -46,6 +49,9 @@
 		916A92E52BC3C38D00C5DA50 /* Scuba LogUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Scuba LogUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		916A92E92BC3C38D00C5DA50 /* Scuba_LogUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Scuba_LogUITests.swift; sourceTree = "<group>"; };
 		916A92EB2BC3C38D00C5DA50 /* Scuba_LogUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Scuba_LogUITestsLaunchTests.swift; sourceTree = "<group>"; };
+		916A92F82BC3C46700C5DA50 /* NewEntryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewEntryView.swift; sourceTree = "<group>"; };
+		91CE64962BC4C545004E3733 /* TimeInterval+Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TimeInterval+Constants.swift"; sourceTree = "<group>"; };
+		91CE64982BC4DBE0004E3733 /* EntryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntryView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -98,7 +104,10 @@
 			children = (
 				916A92CC2BC3C38A00C5DA50 /* Scuba_LogApp.swift */,
 				916A92CE2BC3C38A00C5DA50 /* ContentView.swift */,
-				916A92D02BC3C38A00C5DA50 /* Item.swift */,
+				916A92D02BC3C38A00C5DA50 /* Entry.swift */,
+				91CE64982BC4DBE0004E3733 /* EntryView.swift */,
+				916A92F82BC3C46700C5DA50 /* NewEntryView.swift */,
+				91CE64962BC4C545004E3733 /* TimeInterval+Constants.swift */,
 				916A92D22BC3C38C00C5DA50 /* Assets.xcassets */,
 				916A92D42BC3C38C00C5DA50 /* Preview Content */,
 			);
@@ -260,9 +269,12 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				916A92F92BC3C46700C5DA50 /* NewEntryView.swift in Sources */,
 				916A92CF2BC3C38A00C5DA50 /* ContentView.swift in Sources */,
-				916A92D12BC3C38A00C5DA50 /* Item.swift in Sources */,
+				916A92D12BC3C38A00C5DA50 /* Entry.swift in Sources */,
+				91CE64972BC4C545004E3733 /* TimeInterval+Constants.swift in Sources */,
 				916A92CD2BC3C38A00C5DA50 /* Scuba_LogApp.swift in Sources */,
+				91CE64992BC4DBE0004E3733 /* EntryView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

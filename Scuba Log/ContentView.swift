@@ -10,16 +10,17 @@ import SwiftData
 
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
-    @Query private var items: [Item]
-
+    @Query private var entries: [Entry]
+    @State private var showingNewEntryView = false
+    
     var body: some View {
-        NavigationSplitView {
+        NavigationView {
             List {
-                ForEach(items) { item in
+                ForEach(entries) { entry in
                     NavigationLink {
-                        Text("Item at \(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))")
+                        EntryView(entry: entry)
                     } label: {
-                        Text(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))
+                        Text("\(entry.title) \(entry.startDate, format: Date.FormatStyle(date: .numeric, time: .standard))")
                     }
                 }
                 .onDelete(perform: deleteItems)
@@ -29,27 +30,32 @@ struct ContentView: View {
                     EditButton()
                 }
                 ToolbarItem {
-                    Button(action: addItem) {
+                    Button(action: {
+                        showingNewEntryView = true
+                    }) {
                         Label("Add Item", systemImage: "plus")
                     }
+                    .padding()
                 }
             }
-        } detail: {
-            Text("Select an item")
+            .navigationBarTitle("Scuba Log", displayMode: .large)
+        }
+        .sheet(isPresented: $showingNewEntryView) {
+            NewEntryView(isPresented: $showingNewEntryView, addItem: addItem)
+                .interactiveDismissDisabled()
         }
     }
-
-    private func addItem() {
+    
+    private func addItem(_ newItem: Entry) {
         withAnimation {
-            let newItem = Item(timestamp: Date())
             modelContext.insert(newItem)
         }
     }
-
+    
     private func deleteItems(offsets: IndexSet) {
         withAnimation {
             for index in offsets {
-                modelContext.delete(items[index])
+                modelContext.delete(entries[index])
             }
         }
     }
@@ -57,5 +63,5 @@ struct ContentView: View {
 
 #Preview {
     ContentView()
-        .modelContainer(for: Item.self, inMemory: true)
+        .modelContainer(for: Entry.self, inMemory: true)
 }
