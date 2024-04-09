@@ -1,6 +1,6 @@
 //
 //  NewEntryView.swift
-//  Scuba Log 
+//  Scuba Log
 //
 //  Created by Neha Peace on 4/7/24.
 //
@@ -17,30 +17,39 @@ struct NewEntryView: View {
     var body: some View {
         NavigationView {
             VStack {
-                HStack {
-                    Button("Cancel") {
-                        isPresented = false
-                    }
-                    .padding()
-                    
-                    Spacer()
-                    
-                    Text("New Dive")
-                        .font(.headline)
-                        .padding()
-                    
-                    Spacer()
-                    
-                    Button("Create") {
-                        addItem(newEntry)
-                        isPresented = false
-                    }
-                    .font(.headline)
-                    .padding()
-                }
-            
+                ButtonView(newEntry: $newEntry, isPresented: $isPresented, addItem: addItem)
                 EntryFormView(newEntry: $newEntry, isMetric: $isMetric)
             }
+        }
+    }
+}
+
+struct ButtonView: View {
+    @Binding var newEntry: Entry
+    @Binding var isPresented: Bool
+    var addItem: (Entry) -> Void
+    
+    var body: some View {
+        HStack {
+            Button("Cancel") {
+                isPresented = false
+            }
+            .padding()
+            
+            Spacer()
+            
+            Text("New Dive")
+                .font(.headline)
+                .padding()
+            
+            Spacer()
+            
+            Button("Create") {
+                addItem(newEntry)
+                isPresented = false
+            }
+            .font(.headline)
+            .padding()
         }
     }
 }
@@ -64,7 +73,7 @@ struct EntryFormView: View {
         }
     }
 }
-                            
+
 struct TextFormView: View {
     @Binding var text: String
     var label: String

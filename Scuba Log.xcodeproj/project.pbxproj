@@ -17,6 +17,7 @@
 		916A92EC2BC3C38D00C5DA50 /* Scuba_LogUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 916A92EB2BC3C38D00C5DA50 /* Scuba_LogUITestsLaunchTests.swift */; };
 		916A92F92BC3C46700C5DA50 /* NewEntryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 916A92F82BC3C46700C5DA50 /* NewEntryView.swift */; };
 		91CE64972BC4C545004E3733 /* TimeInterval+Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91CE64962BC4C545004E3733 /* TimeInterval+Constants.swift */; };
+		91CE64992BC4DBE0004E3733 /* EntryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91CE64982BC4DBE0004E3733 /* EntryView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -50,6 +51,7 @@
 		916A92EB2BC3C38D00C5DA50 /* Scuba_LogUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Scuba_LogUITestsLaunchTests.swift; sourceTree = "<group>"; };
 		916A92F82BC3C46700C5DA50 /* NewEntryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewEntryView.swift; sourceTree = "<group>"; };
 		91CE64962BC4C545004E3733 /* TimeInterval+Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TimeInterval+Constants.swift"; sourceTree = "<group>"; };
+		91CE64982BC4DBE0004E3733 /* EntryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntryView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -102,8 +104,9 @@
 			children = (
 				916A92CC2BC3C38A00C5DA50 /* Scuba_LogApp.swift */,
 				916A92CE2BC3C38A00C5DA50 /* ContentView.swift */,
-				916A92F82BC3C46700C5DA50 /* NewEntryView.swift */,
 				916A92D02BC3C38A00C5DA50 /* Entry.swift */,
+				91CE64982BC4DBE0004E3733 /* EntryView.swift */,
+				916A92F82BC3C46700C5DA50 /* NewEntryView.swift */,
 				91CE64962BC4C545004E3733 /* TimeInterval+Constants.swift */,
 				916A92D22BC3C38C00C5DA50 /* Assets.xcassets */,
 				916A92D42BC3C38C00C5DA50 /* Preview Content */,
@@ -271,6 +274,7 @@
 				916A92D12BC3C38A00C5DA50 /* Entry.swift in Sources */,
 				91CE64972BC4C545004E3733 /* TimeInterval+Constants.swift in Sources */,
 				916A92CD2BC3C38A00C5DA50 /* Scuba_LogApp.swift in Sources */,
+				91CE64992BC4DBE0004E3733 /* EntryView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

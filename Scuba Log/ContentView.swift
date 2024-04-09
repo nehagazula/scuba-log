@@ -18,11 +18,9 @@ struct ContentView: View {
             List {
                 ForEach(entries) { entry in
                     NavigationLink {
-                        Text("Entry: \(entry.title) created at \(entry.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard)). Max Depth \(entry.maxDepth)m. Start: \(entry.startDate, format: Date.FormatStyle(date: .numeric, time: .standard)), End: \(entry.endDate, format: Date.FormatStyle(date: .numeric, time: .standard))")
+                        EntryView(entry: entry)
                     } label: {
-                        Text("\(entry.title)")
-                        Text(entry.startDate, format: Date.FormatStyle(date: .numeric, time: .standard))
-                        
+                        Text("\(entry.title) \(entry.startDate, format: Date.FormatStyle(date: .numeric, time: .standard))")
                     }
                 }
                 .onDelete(perform: deleteItems)
