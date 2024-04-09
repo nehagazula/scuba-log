@@ -14,10 +14,15 @@ struct EntryView: View {
         NavigationView {
             VStack {
                 Text("From \(entry.startDate, format: Date.FormatStyle(date: .numeric, time: .standard)) to \(entry.endDate, format: Date.FormatStyle(date: .numeric, time: .standard))")
-                Text("Max Depth \(entry.maxDepth)m. Start: \(entry.startDate, format: Date.FormatStyle(date: .numeric, time: .standard))")
+                Text("Max Depth \(entry.maxDepth) ft") // need to modify units according to isMetric
+                if let weight = entry.weight {
+                    Text("Weight \(weight) lbs") // need to modify units according to isMetric
+                }
+                if let weightCategory = entry.weightCategory {
+                    Text("Weighting: \(weightCategory.rawValue.capitalized)")
+                }
             }
             .navigationBarTitle(entry.title, displayMode: .large)
         }
-        
     }
 }

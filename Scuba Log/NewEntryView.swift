@@ -61,7 +61,7 @@ struct EntryFormView: View {
     var body: some View {
         Form {
             Section {
-                TextFormView(text: $newEntry.title, label: "Dive Location", placeholder: "Breakwater")
+                LocationFormView(text: $newEntry.title, label: "Dive Location", placeholder: "Breakwater")
             }
             Section {
                 DateFormView(date: $newEntry.startDate, label: "Start")
@@ -70,11 +70,14 @@ struct EntryFormView: View {
             Section {
                 DepthFormView(value: $newEntry.maxDepth, isMetric: $isMetric, label: "Maximum Depth")
             }
+            Section {
+                WeightFormView(weight: $newEntry.weight, weightCategory: $newEntry.weightCategory, isMetric: $isMetric, label: "Weight")
+            }
         }
     }
 }
 
-struct TextFormView: View {
+struct LocationFormView: View {
     @Binding var text: String
     var label: String
     var placeholder: String
@@ -125,3 +128,37 @@ struct DepthFormView: View {
         }
     }
 }
+
+struct WeightFormView: View {
+    @Binding var weight: Float?
+    @Binding var weightCategory: Weighting?
+    @Binding var isMetric: Bool
+    
+    var label: String
+    
+    var body: some View {
+        let metricPlaceholder = isMetric ? "kg" : "lb"
+        
+        HStack {
+            Text(label)
+                .frame(alignment: .leading)
+            Spacer()
+            TextField("0", value: $weight, format: .number)
+                .multilineTextAlignment(.trailing)
+            Text(metricPlaceholder)
+        }
+        
+        VStack {
+            Picker("Weight Correctness",
+                   selection: $weightCategory) {
+                ForEach(Weighting.allCases) { weightCategory in
+                    Text(weightCategory.rawValue.capitalized)
+                        .tag(weightCategory as Weighting?)
+                }
+            }
+        }
+        .pickerStyle(.segmented)
+    }
+}
+
+

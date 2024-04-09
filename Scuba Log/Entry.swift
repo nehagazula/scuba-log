@@ -16,6 +16,8 @@ final class Entry {
     @Attribute var startDate: Date
     @Attribute var endDate: Date
     @Attribute var maxDepth: Float // meters
+    @Attribute var weight: Float? //kg
+    @Attribute var weightCategory: Weighting?
     
     init(timestamp: Date) {
         self.id = UUID()
@@ -24,5 +26,14 @@ final class Entry {
         self.startDate = Date.now - 8 * .hour
         self.endDate = Date.now - 7 * .hour
         self.maxDepth = 0
+        self.weight = nil
+        self.weightCategory = nil
     }
+}
+
+enum Weighting: String, CaseIterable, Codable, Identifiable {
+    case underweight
+    case good
+    case overweight
+    var id: Self { self }
 }
