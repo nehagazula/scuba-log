@@ -1,5 +1,5 @@
 //
-//  Item.swift
+//  Entry.swift
 //  Scuba Log
 //
 //  Created by Neha Peace on 4/7/24.
@@ -25,10 +25,4 @@ final class Entry {
         self.endDate = Date.now - 7 * .hour
         self.maxDepth = 0
     }
-}
-
-extension TimeInterval {
-    static var hour: TimeInterval { 60 * 60 }
-    static var day: TimeInterval { 24 * Self.hour }
-    
 }

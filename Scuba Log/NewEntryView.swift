@@ -1,6 +1,6 @@
 //
 //  NewEntryView.swift
-//  Scuba Log
+//  Scuba Log 
 //
 //  Created by Neha Peace on 4/7/24.
 //
@@ -8,7 +8,6 @@
 import SwiftUI
 
 struct NewEntryView: View {
-    @Environment(\.presentationMode) var presentationMode
     @Binding var isPresented: Bool
     @State private var newItemTitle: String = ""
     @State private var newEntry: Entry = Entry(timestamp: Date())
@@ -39,24 +38,33 @@ struct NewEntryView: View {
                     .font(.headline)
                     .padding()
                 }
-                
-                Form {
-                    Section {
-                        TextFormView(text: $newEntry.title, label: "Dive Location", placeholder: "Breakwater")
-                    }
-                    Section {
-                        DateFormView(date: $newEntry.startDate, label: "Start")
-                        DateFormView(date: $newEntry.endDate, label: "End")
-                    }
-                    Section {
-                        NumberFormView(value: $newEntry.maxDepth, isMetric: $isMetric, label: "Maximum Depth")
-                    }
-                }
+            
+                EntryFormView(newEntry: $newEntry, isMetric: $isMetric)
             }
         }
     }
 }
 
+struct EntryFormView: View {
+    @Binding var newEntry: Entry
+    @Binding var isMetric: Bool
+    
+    var body: some View {
+        Form {
+            Section {
+                TextFormView(text: $newEntry.title, label: "Dive Location", placeholder: "Breakwater")
+            }
+            Section {
+                DateFormView(date: $newEntry.startDate, label: "Start")
+                DateFormView(date: $newEntry.endDate, label: "End")
+            }
+            Section {
+                DepthFormView(value: $newEntry.maxDepth, isMetric: $isMetric, label: "Maximum Depth")
+            }
+        }
+    }
+}
+                            
 struct TextFormView: View {
     @Binding var text: String
     var label: String
@@ -83,11 +91,12 @@ struct DateFormView: View {
     }
 }
 
-struct NumberFormView: View {
+struct DepthFormView: View {
     @Binding var value: Float
     @Binding var isMetric: Bool
     var label: String
     
+    let MetersToFeet: Float = 3.28084
     var body: some View {
         Section(header: Text(label)) {
             Picker("Depth", selection: $value) {
@@ -99,7 +108,7 @@ struct NumberFormView: View {
                 } else {
                     ForEach(1..<300) { depth in
                         Text("\(depth) feet")
-                            .tag(Float(depth) / 3.28084)
+                            .tag(Float(depth) / MetersToFeet)
                     }
                 }
             }
