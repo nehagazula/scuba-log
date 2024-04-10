@@ -18,6 +18,9 @@ final class Entry {
     @Attribute var maxDepth: Float // meters
     @Attribute var weight: Float? //kg
     @Attribute var weightCategory: Weighting?
+    @Attribute var tankSize: Float?
+    @Attribute var tankMaterial: tankCategory?
+    @Attribute var waterType: waterCategory?
     
     init(timestamp: Date) {
         self.id = UUID()
@@ -35,5 +38,18 @@ enum Weighting: String, CaseIterable, Codable, Identifiable {
     case underweight
     case good
     case overweight
+    var id: Self { self }
+}
+
+enum tankCategory: String, CaseIterable, Codable, Identifiable {
+    case aluminium
+    case steel
+    case other
+    var id: Self { self }
+}
+
+enum waterCategory: String, CaseIterable, Codable, Identifiable {
+    case Salt
+    case Fresh
     var id: Self { self }
 }

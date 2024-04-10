@@ -73,6 +73,12 @@ struct EntryFormView: View {
             Section {
                 WeightFormView(weight: $newEntry.weight, weightCategory: $newEntry.weightCategory, isMetric: $isMetric, label: "Weight")
             }
+            Section {
+                TankFormView(tankSize: $newEntry.tankSize, tankMaterial: $newEntry.tankMaterial, label: "Cylinder Size")
+            }
+            Section {
+                WaterFormView(waterType: $newEntry.waterType)
+            }
         }
     }
 }
@@ -161,4 +167,54 @@ struct WeightFormView: View {
     }
 }
 
+struct TankFormView: View {
+    @Binding var tankSize: Float?
+    @Binding var tankMaterial: tankCategory?
+    var label: String
+    
+    var body: some View {
+        HStack {
+            Text(label)
+                .frame(alignment: .leading)
+            Spacer()
+            TextField("0", value: $tankSize, format: .number)
+                .multilineTextAlignment(.trailing)
+            Text("Cubic Feet")
+        }
+        
+        VStack {
+            Picker("Cylinder Type",
+                   selection: $tankMaterial) {
+                ForEach(tankCategory.allCases) { tankMaterial in
+                    Text(tankMaterial.rawValue.capitalized)
+                        .tag(tankMaterial as tankCategory?)
+                }
+            }
+        }
+    }
+}
 
+struct WaterFormView: View {
+    @Binding var waterType: waterCategory?
+    var body: some View {
+        VStack {
+            Picker("Water Type",
+                   selection: $waterType) {
+                ForEach(waterCategory.allCases) { waterType in
+                    Text(waterType.rawValue.capitalized)
+                        .tag(waterType as waterCategory?)
+                }
+            }
+        }
+    }
+}
+
+//// implement slider view
+//struct VisibilityFormView: View {
+//    
+//    var body: some View {
+//        Slider {
+//            
+//        }
+//    }
+//}
