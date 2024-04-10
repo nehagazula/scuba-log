@@ -79,6 +79,9 @@ struct EntryFormView: View {
             Section {
                 WaterFormView(waterType: $newEntry.waterType)
             }
+            Section {
+                VisibilityFormView(visibility: $newEntry.visibility)
+            }
         }
     }
 }
@@ -209,12 +212,23 @@ struct WaterFormView: View {
     }
 }
 
-//// implement slider view
-//struct VisibilityFormView: View {
-//    
-//    var body: some View {
-//        Slider {
-//            
-//        }
-//    }
-//}
+// implement slider view
+// add images to slider labels 
+struct VisibilityFormView: View {
+    @Binding var visibility: Float
+    
+    // to remove fraction digits
+    let numberFormatter: NumberFormatter = {
+        let num = NumberFormatter()
+        num.maximumFractionDigits = 0
+        return num
+    }()
+    
+    var body: some View {
+        VStack{
+            Slider(value: $visibility, in: 0...100)
+            Text("Visibility: \(numberFormatter.string(from: NSNumber(value: visibility))!)%")
+        }
+    }
+}
+

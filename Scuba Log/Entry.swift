@@ -21,6 +21,7 @@ final class Entry {
     @Attribute var tankSize: Float?
     @Attribute var tankMaterial: tankCategory?
     @Attribute var waterType: waterCategory?
+    @Attribute var visibility: Float
     
     init(timestamp: Date) {
         self.id = UUID()
@@ -31,6 +32,7 @@ final class Entry {
         self.maxDepth = 0
         self.weight = nil
         self.weightCategory = nil
+        self.visibility = 0.5
     }
 }
 
