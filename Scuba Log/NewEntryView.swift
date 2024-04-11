@@ -61,7 +61,10 @@ struct EntryFormView: View {
     var body: some View {
         Form {
             Section {
-                LocationFormView(text: $newEntry.title, label: "Dive Location", placeholder: "Breakwater")
+                LocationFormView(text: $newEntry.title, label: "Dive Title", placeholder: "My dive")
+            }
+            Section {
+                LocationFormView(text: $newEntry.location, label: "Dive Site", placeholder: "Breakwater")
             }
             Section {
                 DateFormView(date: $newEntry.startDate, label: "Start")

@@ -20,7 +20,10 @@ struct ContentView: View {
                     NavigationLink {
                         EntryView(entry: entry)
                     } label: {
-                        Text("\(entry.title) \(entry.startDate, format: Date.FormatStyle(date: .numeric, time: .standard))")
+                        VStack(alignment: .leading, spacing: 4){
+                            Text("\(entry.title)").bold()
+                            Text("\(entry.startDate, format: Date.FormatStyle(date: .abbreviated)), \(entry.location)").font(.footnote)
+                        }
                     }
                 }
                 .onDelete(perform: deleteItems)
