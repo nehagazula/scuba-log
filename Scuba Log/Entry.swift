@@ -24,6 +24,7 @@ final class Entry {
     @Attribute var waterType: waterCategory?
     @Attribute var visibility: Float
     @Attribute var notes: String
+    @Attribute var rating: Int
     
     init(timestamp: Date) {
         self.id = UUID()
@@ -37,6 +38,7 @@ final class Entry {
         self.weightCategory = nil
         self.visibility = 0.5
         self.notes = ""
+        self.rating = 0
     }
 }
 
