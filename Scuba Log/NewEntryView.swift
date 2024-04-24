@@ -98,11 +98,11 @@ struct EntryFormView: View {
             }
             // Experience
             Form {
-                Section {
+                Section(header: Text("Experience")) {
                     RatingFormView(rating: $newEntry.rating, label: "Rating")
                 }
                 
-                Section(header: Text("Experience")) {
+                Section {
                     NotesFomView(notes: $newEntry.notes, label: "Notes")
                 }
             }

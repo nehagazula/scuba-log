@@ -11,18 +11,38 @@ struct EntryView: View {
     var entry: Entry
     
     var body: some View {
-        NavigationView {
-            VStack {
-                Text("From \(entry.startDate, format: Date.FormatStyle(date: .numeric, time: .standard)) to \(entry.endDate, format: Date.FormatStyle(date: .numeric, time: .standard))")
-                Text("Max Depth \(entry.maxDepth) ft") // need to modify units according to isMetric
+        List {
+            Section(header: Text("General")) {
+                Text("**Dive Site:** \(entry.location)")
+                Text("**Date:** \(entry.startDate, format: Date.FormatStyle(date: .numeric))")
+                Text("**Time:** \(entry.startDate, style: .time) to \(entry.endDate, style: .time)") //maybe want duration?
+                Text("**Max Depth:** \(entry.maxDepth, specifier: "%.0f") ft") // need to modify units according to isMetric
+            }
+            Section(header: Text("Equipment")) {
                 if let weight = entry.weight {
-                    Text("Weight \(weight) lbs") // need to modify units according to isMetric
+                    Text("**Weight:** \(weight, specifier: "%.1f") lbs") // need to modify units according to isMetric
                 }
                 if let weightCategory = entry.weightCategory {
-                    Text("Weighting: \(weightCategory.rawValue.capitalized)")
+                    Text("**Weighting:** \(weightCategory.rawValue.capitalized)")
+                }
+                if let tankSize = entry.tankSize {
+                    Text("**Cylinder Size:** \(tankSize, specifier: "%.0f") Cubic Feet")
+                }
+                if let tankMaterial = entry.tankMaterial {
+                    Text("**Cylinder Type:** \(tankMaterial.rawValue.capitalized)")
                 }
             }
-            .navigationBarTitle(entry.title, displayMode: .large)
+            Section(header: Text("Conditions")) {
+                if let waterType = entry.waterType {
+                    Text("**Water Type:** \(waterType.rawValue.capitalized)")
+                }
+                Text("**Visibility:** \(entry.visibility, specifier: "%.0f")%")
+            }
+            Section(header: Text("Experience")) {
+                Text("**Rating:** \(entry.rating) Stars") //replace with actual stars?
+                Text("**Notes:** \(entry.notes)")
+            }
         }
+        .navigationBarTitle(entry.title, displayMode: .large)
     }
 }
