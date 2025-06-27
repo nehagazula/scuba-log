@@ -273,23 +273,9 @@ struct CylinderPressureFormView: View {
     
     // State for controlling error alert visibility
     
-//    @State private var showPressureErrorAlert: Bool = false
-//    @State private var pressureErrorMessage: String = ""
-    
-    // Compute amountUsed
-    
-    var amountUsed: Float? {
-        if let start = startPressure, let end = endPressure {
-            if end <= start {
-                return start - end
-            } else {
-//                pressureErrorMessage = "End pressure cannot be higher than start pressure PSI! Please correct the values."
-//                showPressureErrorAlert = true
-                return nil
-            }
-        }
-        return nil // if start and end is nil
-    }
+    @State private var showPressureErrorAlert: Bool = false
+    @State private var pressureErrorMessage: String = ""
+    @State private var calculatedAmountUsed: Float? = nil
     
     var body: some View {
         HStack {
@@ -314,17 +300,39 @@ struct CylinderPressureFormView: View {
                 Text("Amount Used")
                     .frame(alignment: .leading)
                 Spacer()
-            Text(amountUsed != nil ? "\(amountUsed!, format: .number) PSI" : "--")
-                .foregroundColor(amountUsed != nil ? .primary : .gray)
+            Text(calculatedAmountUsed != nil ? "\(calculatedAmountUsed!, format: .number) PSI" : "--")
+                .foregroundColor(calculatedAmountUsed != nil ? .primary : .gray)
         }
         
-//        .alert("Input Error", isPresented: $showPressureErrorAlert) {
-//            Button("OK") {
-//                
-//            }
-//        } message: {
-//            Text(pressureErrorMessage)
-//        }
+        .onChange(of: startPressure) {
+            recalculateAmountAndCheckErrors()
+        }
+        
+        .onChange(of: endPressure) {
+            recalculateAmountAndCheckErrors()
+        }
+        
+        .alert("Input Error", isPresented: $showPressureErrorAlert) {
+            Button("OK") {}
+        } message: {
+            Text(pressureErrorMessage)
+        }
+    }
+    
+    private func recalculateAmountAndCheckErrors() {
+        // reset in case previously set
+        showPressureErrorAlert = false
+        pressureErrorMessage = ""
+        calculatedAmountUsed = nil
+        
+        if let start = startPressure, let end = endPressure {
+            if end <= start {
+                calculatedAmountUsed = start - end
+            } else {
+                pressureErrorMessage = "End pressure cannot be higher than start pressure! Please correct the values."
+                showPressureErrorAlert = true
+            }
+        }
     }
 }
     
