@@ -69,6 +69,9 @@ struct EntryFormView: View {
                     LocationFormView(text: $newEntry.location, label: "Dive Site", placeholder: "Breakwater")
                 }
                 Section {
+                    DiveTypeFormView(diveType: $newEntry.diveType, label: "Dive Type")
+                }
+                Section {
                     DateFormView(date: $newEntry.startDate, label: "Start")
                     DateFormView(date: $newEntry.endDate, label: "End")
                 }
@@ -86,11 +89,17 @@ struct EntryFormView: View {
                 Section {
                     TankFormView(tankSize: $newEntry.tankSize, tankMaterial: $newEntry.tankMaterial, label: "Cylinder Size")
                 }
+                Section {
+                    CylinderPressureFormView(startPressure: $newEntry.startPressure, endPressure: $newEntry.endPressure)
+                }
+                Section {
+                    SuitFormView(suitType: $newEntry.suitType)
+                }
             }
             // Conditions
             Form {
                 Section(header: Text("Conditions")) {
-                    WaterFormView(waterType: $newEntry.waterType)
+                    WaterFormView(waterType: $newEntry.waterType, waterBody: $newEntry.waterBody)
                 }
                 Section {
                     VisibilityFormView(visibility: $newEntry.visibility)
@@ -125,6 +134,23 @@ struct LocationFormView: View {
             Spacer()
             TextField(placeholder, text: $text)
                 .multilineTextAlignment(.trailing)
+        }
+    }
+}
+
+struct DiveTypeFormView: View {
+    @Binding var diveType: diveCategory?
+    var label: String
+    
+    var body: some View {
+        VStack {
+            Picker("Dive Type",
+                   selection: $diveType) {
+                ForEach(diveCategory.allCases) { diveType in
+                    Text(diveType.rawValue.capitalized)
+                        .tag(diveType as diveCategory?)
+                }
+            }
         }
     }
 }
@@ -224,8 +250,91 @@ struct TankFormView: View {
     }
 }
 
+struct SuitFormView: View {
+    @Binding var suitType: suitCategory?
+    
+    var body: some View
+    {
+        VStack {
+            Picker("Suit Type",
+                   selection: $suitType) {
+                ForEach(suitCategory.allCases) { suitType in
+                    Text(suitType.name)
+                        .tag(suitType as suitCategory?)
+                }
+            }
+        }
+    }
+}
+
+struct CylinderPressureFormView: View {
+    @Binding var startPressure: Float?
+    @Binding var endPressure: Float?
+    
+    // State for controlling error alert visibility
+    
+//    @State private var showPressureErrorAlert: Bool = false
+//    @State private var pressureErrorMessage: String = ""
+    
+    // Compute amountUsed
+    
+    var amountUsed: Float? {
+        if let start = startPressure, let end = endPressure {
+            if end <= start {
+                return start - end
+            } else {
+//                pressureErrorMessage = "End pressure cannot be higher than start pressure PSI! Please correct the values."
+//                showPressureErrorAlert = true
+                return nil
+            }
+        }
+        return nil // if start and end is nil
+    }
+    
+    var body: some View {
+        HStack {
+            Text("Start Pressure")
+                .frame(alignment: .leading)
+            Spacer()
+            TextField("0", value: $startPressure, format: .number)
+                .multilineTextAlignment(.trailing)
+            Text("PSI")
+        }
+        
+        HStack {
+            Text("End Pressure")
+                .frame(alignment: .leading)
+            Spacer()
+            TextField("0", value: $endPressure, format: .number)
+                .multilineTextAlignment(.trailing)
+            Text("PSI")
+        }
+        
+        HStack {
+                Text("Amount Used")
+                    .frame(alignment: .leading)
+                Spacer()
+            Text(amountUsed != nil ? "\(amountUsed!, format: .number) PSI" : "--")
+                .foregroundColor(amountUsed != nil ? .primary : .gray)
+        }
+        
+//        .alert("Input Error", isPresented: $showPressureErrorAlert) {
+//            Button("OK") {
+//                
+//            }
+//        } message: {
+//            Text(pressureErrorMessage)
+//        }
+    }
+}
+    
+   
+
+
 struct WaterFormView: View {
     @Binding var waterType: waterCategory?
+    @Binding var waterBody: waterbodyCategory?
+    
     var body: some View {
         VStack {
             Picker("Water Type",
@@ -236,11 +345,20 @@ struct WaterFormView: View {
                 }
             }
         }
+        
+        VStack {
+            Picker("Water Body",
+                   selection: $waterBody) {
+                ForEach(waterbodyCategory.allCases) { waterBody in
+                    Text(waterBody.rawValue.capitalized)
+                        .tag(waterBody as waterbodyCategory?)
+                }
+            }
+        }
     }
 }
 
-// implement slider view
-// add images to slider labels
+// implements slider view
 struct VisibilityFormView: View {
     @Binding var visibility: Float
     

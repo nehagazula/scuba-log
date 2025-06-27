@@ -14,6 +14,7 @@ final class Entry {
     @Attribute var timestamp: Date
     @Attribute var title: String
     @Attribute var location: String
+    @Attribute var diveType: diveCategory?
     @Attribute var startDate: Date
     @Attribute var endDate: Date
     @Attribute var maxDepth: Float // meters
@@ -21,10 +22,14 @@ final class Entry {
     @Attribute var weightCategory: Weighting?
     @Attribute var tankSize: Float?
     @Attribute var tankMaterial: tankCategory?
+    @Attribute var suitType: suitCategory?
     @Attribute var waterType: waterCategory?
+    @Attribute var waterBody: waterbodyCategory?
     @Attribute var visibility: Float
     @Attribute var notes: String
     @Attribute var rating: Int
+    @Attribute var startPressure: Float?
+    @Attribute var endPressure: Float?
     
     init(timestamp: Date) {
         self.id = UUID()
@@ -42,6 +47,13 @@ final class Entry {
     }
 }
 
+enum diveCategory: String, CaseIterable, Codable, Identifiable {
+    case shore
+    case boat
+    case other
+    var id: Self { self }
+}
+
 enum Weighting: String, CaseIterable, Codable, Identifiable {
     case underweight
     case good
@@ -56,8 +68,47 @@ enum tankCategory: String, CaseIterable, Codable, Identifiable {
     var id: Self { self }
 }
 
+enum suitCategory: CaseIterable, Codable, Identifiable {
+    case fullSuit3
+    case fullSuit5
+    case fullSuit7
+    case drySuit
+    case semiDry
+    case shorty
+    case none
+    var id: Self { self }
+    
+    var name: String {
+        switch self {
+        case .fullSuit3:
+            return "Full Suit 3mm"
+        case .fullSuit5:
+            return "Full Suit 5mm"
+        case .fullSuit7:
+            return  "Full Suit 7mm"
+        case .drySuit:
+            return "Dry Suit"
+        case .semiDry:
+            return "Semi Dry"
+        case .shorty:
+            return "Shorty"
+        case .none:
+            return "None"
+        }
+    }
+}
+
 enum waterCategory: String, CaseIterable, Codable, Identifiable {
     case Salt
     case Fresh
+    var id: Self { self }
+}
+
+enum waterbodyCategory: String, CaseIterable, Codable, Identifiable {
+    case Ocean
+    case Lake
+    case Quarry
+    case River
+    case Other
     var id: Self { self }
 }

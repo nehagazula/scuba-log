@@ -36,6 +36,9 @@ struct EntryView: View {
                 if let waterType = entry.waterType {
                     Text("**Water Type:** \(waterType.rawValue.capitalized)")
                 }
+                if let waterBody = entry.waterBody {
+                    Text("**Water Body:** \(waterBody.rawValue.capitalized)")
+                }
                 Text("**Visibility:** \(entry.visibility, specifier: "%.0f")%")
             }
             Section(header: Text("Experience")) {
