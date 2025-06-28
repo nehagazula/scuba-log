@@ -30,6 +30,11 @@ final class Entry {
     @Attribute var rating: Int
     @Attribute var startPressure: Float?
     @Attribute var endPressure: Float?
+    @Attribute var gasMixture: gasCategory?
+    @Attribute var surfTemp: Float?
+    @Attribute var airTemp: Float?
+    @Attribute var bottomTemp: Float?
+
     
     init(timestamp: Date) {
         self.id = UUID()
@@ -65,6 +70,14 @@ enum tankCategory: String, CaseIterable, Codable, Identifiable {
     case aluminium
     case steel
     case other
+    var id: Self { self }
+}
+
+enum gasCategory: String, CaseIterable, Codable, Identifiable {
+    case air
+    case eanx32
+    case eanx36
+    case eanx40
     var id: Self { self }
 }
 

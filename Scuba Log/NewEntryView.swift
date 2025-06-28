@@ -87,13 +87,16 @@ struct EntryFormView: View {
                     WeightFormView(weight: $newEntry.weight, weightCategory: $newEntry.weightCategory, isMetric: $isMetric, label: "Weight")
                 }
                 Section {
-                    TankFormView(tankSize: $newEntry.tankSize, tankMaterial: $newEntry.tankMaterial, label: "Cylinder Size")
+                    TankFormView(tankSize: $newEntry.tankSize, tankMaterial: $newEntry.tankMaterial, gasMixture: $newEntry.gasMixture, isMetric: $isMetric, label: "Cylinder Size")
                 }
                 Section {
-                    CylinderPressureFormView(startPressure: $newEntry.startPressure, endPressure: $newEntry.endPressure)
+                    CylinderPressureFormView(startPressure: $newEntry.startPressure, endPressure: $newEntry.endPressure, isMetric: $isMetric)
                 }
                 Section {
                     SuitFormView(suitType: $newEntry.suitType)
+                }
+                Section {
+                    OtherGearFormView()
                 }
             }
             // Conditions
@@ -103,6 +106,9 @@ struct EntryFormView: View {
                 }
                 Section {
                     VisibilityFormView(visibility: $newEntry.visibility)
+                }
+                Section {
+                    TemperatureFormView(surfTemp: $newEntry.surfTemp, airTemp: $newEntry.airTemp, bottomTemp: $newEntry.bottomTemp, isMetric: $isMetric)
                 }
             }
             // Experience
@@ -226,16 +232,20 @@ struct WeightFormView: View {
 struct TankFormView: View {
     @Binding var tankSize: Float?
     @Binding var tankMaterial: tankCategory?
+    @Binding var gasMixture: gasCategory?
+    @Binding var isMetric: Bool
+    
     var label: String
     
     var body: some View {
+        let metricPlaceholder = isMetric ? "Litres" : "Cubic Feet"
         HStack {
             Text(label)
                 .frame(alignment: .leading)
             Spacer()
             TextField("0", value: $tankSize, format: .number)
                 .multilineTextAlignment(.trailing)
-            Text("Cubic Feet")
+            Text(metricPlaceholder)
         }
         
         VStack {
@@ -244,6 +254,15 @@ struct TankFormView: View {
                 ForEach(tankCategory.allCases) { tankMaterial in
                     Text(tankMaterial.rawValue.capitalized)
                         .tag(tankMaterial as tankCategory?)
+                }
+            }
+        }
+        VStack {
+            Picker("Gas Mixture",
+                   selection: $gasMixture) {
+                ForEach(gasCategory.allCases) { gasMixture in
+                    Text(gasMixture.rawValue.capitalized)
+                        .tag(gasMixture as gasCategory?)
                 }
             }
         }
@@ -267,9 +286,24 @@ struct SuitFormView: View {
     }
 }
 
+struct OtherGearFormView: View {
+    @State var otherGearOn = false
+    
+    var body: some View {
+        Toggle("Additional gear used?", isOn: $otherGearOn)
+
+        if otherGearOn {
+            Button("Hood") {}
+            Button("Gloves") {}
+            Button("Boots"){}
+        }
+    }
+}
+
 struct CylinderPressureFormView: View {
     @Binding var startPressure: Float?
     @Binding var endPressure: Float?
+    @Binding var isMetric: Bool
     
     // State for controlling error alert visibility
     
@@ -278,13 +312,14 @@ struct CylinderPressureFormView: View {
     @State private var calculatedAmountUsed: Float? = nil
     
     var body: some View {
+        let metricPlaceholder = isMetric ? "Bar" : "PSI"
         HStack {
             Text("Start Pressure")
                 .frame(alignment: .leading)
             Spacer()
             TextField("0", value: $startPressure, format: .number)
                 .multilineTextAlignment(.trailing)
-            Text("PSI")
+            Text(metricPlaceholder)
         }
         
         HStack {
@@ -293,7 +328,7 @@ struct CylinderPressureFormView: View {
             Spacer()
             TextField("0", value: $endPressure, format: .number)
                 .multilineTextAlignment(.trailing)
-            Text("PSI")
+            Text(metricPlaceholder)
         }
         
         HStack {
@@ -336,9 +371,6 @@ struct CylinderPressureFormView: View {
     }
 }
     
-   
-
-
 struct WaterFormView: View {
     @Binding var waterType: waterCategory?
     @Binding var waterBody: waterbodyCategory?
@@ -365,6 +397,45 @@ struct WaterFormView: View {
         }
     }
 }
+
+struct TemperatureFormView: View {
+    @Binding var surfTemp: Float?
+    @Binding var airTemp: Float?
+    @Binding var bottomTemp: Float?
+    @Binding var isMetric: Bool
+    
+    var body: some View {
+        let metricPlaceholder = isMetric ? "°C" : "°F"
+        
+        HStack {
+            Text("Air Temperature")
+                .frame(alignment: .leading)
+            Spacer()
+            TextField("0", value: $airTemp, format: .number)
+                .multilineTextAlignment(.trailing)
+            Text(metricPlaceholder)
+        }
+        
+        HStack {
+            Text("Surface Temperature")
+                .frame(alignment: .leading)
+            Spacer()
+            TextField("0", value: $surfTemp, format: .number)
+                .multilineTextAlignment(.trailing)
+            Text(metricPlaceholder)
+        }
+        
+        HStack {
+            Text("Bottom Temperature")
+                .frame(alignment: .leading)
+            Spacer()
+            TextField("0", value: $bottomTemp, format: .number)
+                .multilineTextAlignment(.trailing)
+            Text(metricPlaceholder)
+        }
+    }
+}
+    
 
 // implements slider view
 struct VisibilityFormView: View {
