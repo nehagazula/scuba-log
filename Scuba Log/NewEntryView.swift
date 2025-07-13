@@ -286,17 +286,72 @@ struct SuitFormView: View {
     }
 }
 
+// additional gear options
+enum DiveGear: String, CaseIterable, Hashable {
+    case hood = "Hood"
+    case boots = "Boots"
+    case gloves = "Gloves"
+}
+
+// custom button design for the additional gear
+struct GearButton: View {
+    let gear: DiveGear
+    @Binding var selectedGear: Set<DiveGear>
+
+    var isSelected: Bool {
+        selectedGear.contains(gear)
+    }
+
+    var body: some View {
+        Button(action: {
+            if isSelected {
+                selectedGear.remove(gear)
+            } else {
+                selectedGear.insert(gear)
+            }
+        }) {
+            Text(gear.rawValue)
+                .frame(maxWidth: .infinity)
+                .padding()
+                .background(isSelected ? Color.blue : Color.gray.opacity(0.2))
+                .foregroundColor(isSelected ? .white : .black)
+                .cornerRadius(8)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(Color.gray.opacity(0.4), lineWidth: 1)
+                )
+        }
+        .buttonStyle(PlainButtonStyle()) // to remove weird default tap behavior
+    }
+}
+
 struct OtherGearFormView: View {
-    @State var otherGearOn = false
+    @State private var showAdditionalGearOptions: Bool = false
+    @State private var selectedGear: Set<DiveGear> = []
     
     var body: some View {
-        Toggle("Additional gear used?", isOn: $otherGearOn)
-
-        if otherGearOn {
-            Button("Hood") {}
-            Button("Gloves") {}
-            Button("Boots"){}
+        VStack(alignment: .leading, spacing: 12) {
+            Section {
+                Toggle("Additional gear used?", isOn: $showAdditionalGearOptions)
+            }
+            
+            if showAdditionalGearOptions {
+                HStack(spacing: 12) {
+                    ForEach(DiveGear.allCases, id: \.self) { gear in
+                        GearButton(gear: gear, selectedGear: $selectedGear)
+                            .frame(maxWidth: .infinity)
+                    }
+                }
+            }
+            
+            if !selectedGear.isEmpty {
+                Text("Selected gear: \(selectedGear.map { $0.rawValue }.joined(separator: ", "))")
+                    .font(.footnote)
+                    .foregroundColor(.gray)
+                    .padding(.top, 4)
+            }
         }
+        .padding(.horizontal)
     }
 }
 
