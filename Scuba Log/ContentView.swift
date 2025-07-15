@@ -12,6 +12,7 @@ struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var entries: [Entry]
     @State private var showingNewEntryView = false
+    @State private var showingSettings = false
     
     var body: some View {
         NavigationView {
@@ -40,12 +41,24 @@ struct ContentView: View {
                     }
                     .padding()
                 }
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button {
+                        showingSettings = true
+                    } label: {
+                        Image(systemName: "gear")
+                    }
+                }
             }
             .navigationBarTitle("Scuba Log", displayMode: .large)
         }
         .sheet(isPresented: $showingNewEntryView) {
             NewEntryView(isPresented: $showingNewEntryView, addItem: addItem)
                 .interactiveDismissDisabled()
+        }
+        .sheet(isPresented: $showingSettings) {
+            NavigationView{
+                SettingsView()
+            }
         }
     }
     

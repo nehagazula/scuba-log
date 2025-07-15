@@ -11,14 +11,14 @@ struct NewEntryView: View {
     @Binding var isPresented: Bool
     @State private var newItemTitle: String = ""
     @State private var newEntry: Entry = Entry(timestamp: Date())
-    @State private var isMetric: Bool = false
+//    @State private var isMetric: Bool = false
     var addItem: (Entry) -> Void
     
     var body: some View {
         NavigationView {
             VStack {
                 ButtonView(newEntry: $newEntry, isPresented: $isPresented, addItem: addItem)
-                EntryFormView(newEntry: $newEntry, isMetric: $isMetric)
+                EntryFormView(newEntry: $newEntry)
             }
         }
     }
@@ -56,7 +56,6 @@ struct ButtonView: View {
 
 struct EntryFormView: View {
     @Binding var newEntry: Entry
-    @Binding var isMetric: Bool
     
     var body: some View {
         TabView {
@@ -76,7 +75,7 @@ struct EntryFormView: View {
                     DateFormView(date: $newEntry.endDate, label: "End")
                 }
                 Section {
-                    DepthFormView(value: $newEntry.maxDepth, isMetric: $isMetric, label: "Maximum Depth")
+                    DepthFormView(value: $newEntry.maxDepth, label: "Maximum Depth")
                 }
             }
             
@@ -84,13 +83,13 @@ struct EntryFormView: View {
             
             Form {
                 Section(header: Text("Equipment")) {
-                    WeightFormView(weight: $newEntry.weight, weightCategory: $newEntry.weightCategory, isMetric: $isMetric, label: "Weight")
+                    WeightFormView(weight: $newEntry.weight, weightCategory: $newEntry.weightCategory, label: "Weight")
                 }
                 Section {
-                    TankFormView(tankSize: $newEntry.tankSize, tankMaterial: $newEntry.tankMaterial, gasMixture: $newEntry.gasMixture, isMetric: $isMetric, label: "Cylinder Size")
+                    TankFormView(tankSize: $newEntry.tankSize, tankMaterial: $newEntry.tankMaterial, gasMixture: $newEntry.gasMixture, label: "Cylinder Size")
                 }
                 Section {
-                    CylinderPressureFormView(startPressure: $newEntry.startPressure, endPressure: $newEntry.endPressure, isMetric: $isMetric)
+                    CylinderPressureFormView(startPressure: $newEntry.startPressure, endPressure: $newEntry.endPressure)
                 }
                 Section {
                     SuitFormView(suitType: $newEntry.suitType)
@@ -108,7 +107,7 @@ struct EntryFormView: View {
                     VisibilityFormView(visibility: $newEntry.visibility)
                 }
                 Section {
-                    TemperatureFormView(surfTemp: $newEntry.surfTemp, airTemp: $newEntry.airTemp, bottomTemp: $newEntry.bottomTemp, isMetric: $isMetric)
+                    TemperatureFormView(surfTemp: $newEntry.surfTemp, airTemp: $newEntry.airTemp, bottomTemp: $newEntry.bottomTemp)
                 }
             }
             // Experience
@@ -173,7 +172,8 @@ struct DateFormView: View {
 
 struct DepthFormView: View {
     @Binding var value: Float
-    @Binding var isMetric: Bool
+//    @Binding var isMetric: Bool
+    @AppStorage("isMetric") private var isMetric = true
     var label: String
     
     let MetersToFeet: Float = 3.28084
@@ -200,7 +200,8 @@ struct DepthFormView: View {
 struct WeightFormView: View {
     @Binding var weight: Float?
     @Binding var weightCategory: Weighting?
-    @Binding var isMetric: Bool
+//    @Binding var isMetric: Bool
+    @AppStorage("isMetric") private var isMetric = true
     
     var label: String
     
@@ -233,7 +234,8 @@ struct TankFormView: View {
     @Binding var tankSize: Float?
     @Binding var tankMaterial: tankCategory?
     @Binding var gasMixture: gasCategory?
-    @Binding var isMetric: Bool
+//    @Binding var isMetric: Bool
+    @AppStorage("isMetric") private var isMetric = true
     
     var label: String
     
@@ -358,7 +360,8 @@ struct OtherGearFormView: View {
 struct CylinderPressureFormView: View {
     @Binding var startPressure: Float?
     @Binding var endPressure: Float?
-    @Binding var isMetric: Bool
+//    @Binding var isMetric: Bool
+    @AppStorage("isMetric") private var isMetric = true
     
     // State for controlling error alert visibility
     
@@ -490,7 +493,8 @@ struct TemperatureFormView: View {
     @Binding var surfTemp: Float?
     @Binding var airTemp: Float?
     @Binding var bottomTemp: Float?
-    @Binding var isMetric: Bool
+//    @Binding var isMetric: Bool
+    @AppStorage("isMetric") private var isMetric = true
     
     var body: some View {
         let metricPlaceholder = isMetric ? "°C" : "°F"
