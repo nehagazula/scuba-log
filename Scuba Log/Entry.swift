@@ -25,6 +25,9 @@ final class Entry {
     @Attribute var suitType: suitCategory?
     @Attribute var waterType: waterCategory?
     @Attribute var waterBody: waterbodyCategory?
+    @Attribute var waves: wavesCategory?
+    @Attribute var current: currentCategory?
+    @Attribute var surge: surgeCategory?
     @Attribute var visibility: Float
     @Attribute var notes: String
     @Attribute var rating: Int
@@ -123,5 +126,28 @@ enum waterbodyCategory: String, CaseIterable, Codable, Identifiable {
     case Quarry
     case River
     case Other
+    var id: Self { self }
+}
+
+enum wavesCategory: String, CaseIterable, Codable, Identifiable {
+    case None
+    case Small
+    case Medium
+    case Large
+    var id: Self { self }
+}
+
+enum currentCategory: String, CaseIterable, Codable, Identifiable {
+    case None
+    case Light
+    case Medium
+    case Strong
+    var id: Self { self }
+}
+
+enum surgeCategory: String, CaseIterable, Codable, Identifiable {
+    case Light
+    case Medium
+    case Strong
     var id: Self { self }
 }

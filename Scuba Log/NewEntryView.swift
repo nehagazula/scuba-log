@@ -102,7 +102,7 @@ struct EntryFormView: View {
             // Conditions
             Form {
                 Section(header: Text("Conditions")) {
-                    WaterFormView(waterType: $newEntry.waterType, waterBody: $newEntry.waterBody)
+                    WaterFormView(waterType: $newEntry.waterType, waterBody: $newEntry.waterBody, waves: $newEntry.waves, current: $newEntry.current, surge: $newEntry.surge)
                 }
                 Section {
                     VisibilityFormView(visibility: $newEntry.visibility)
@@ -429,6 +429,9 @@ struct CylinderPressureFormView: View {
 struct WaterFormView: View {
     @Binding var waterType: waterCategory?
     @Binding var waterBody: waterbodyCategory?
+    @Binding var waves: wavesCategory?
+    @Binding var current: currentCategory?
+    @Binding var surge: surgeCategory?
     
     var body: some View {
         VStack {
@@ -447,6 +450,36 @@ struct WaterFormView: View {
                 ForEach(waterbodyCategory.allCases) { waterBody in
                     Text(waterBody.rawValue.capitalized)
                         .tag(waterBody as waterbodyCategory?)
+                }
+            }
+        }
+        
+        VStack {
+            Picker("Waves",
+                   selection: $waves) {
+                ForEach(wavesCategory.allCases) { waves in
+                    Text(waves.rawValue.capitalized)
+                        .tag(waves as wavesCategory?)
+                }
+            }
+        }
+        
+        VStack {
+            Picker("Current",
+                   selection: $current) {
+                ForEach(currentCategory.allCases) { current in
+                    Text(current.rawValue.capitalized)
+                        .tag(current as currentCategory?)
+                }
+            }
+        }
+        
+        VStack {
+            Picker("Surge",
+                   selection: $surge) {
+                ForEach(surgeCategory.allCases) { surge in
+                    Text(surge.rawValue.capitalized)
+                        .tag(surge as surgeCategory?)
                 }
             }
         }
