@@ -13,6 +13,11 @@ struct ContentView: View {
     @Query private var entries: [Entry]
     @State private var showingNewEntryView = false
     @State private var showingSettings = false
+    @AppStorage("appAppearance") private var appAppearanceRawValue: String = AppAppearance.system.rawValue
+    
+    private var appAppearance: AppAppearance {
+        AppAppearance(rawValue: appAppearanceRawValue) ?? .system
+    }
     
     var body: some View {
         NavigationView {
@@ -60,6 +65,7 @@ struct ContentView: View {
                 SettingsView()
             }
         }
+        .preferredColorScheme(appAppearance.colorScheme)
     }
     
     private func addItem(_ newItem: Entry) {
