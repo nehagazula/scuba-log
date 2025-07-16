@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import MapKit
 
 struct NewEntryView: View {
     @Binding var isPresented: Bool
@@ -65,7 +66,7 @@ struct EntryFormView: View {
                     LocationFormView(text: $newEntry.title, label: "Dive Title", placeholder: "My dive")
                 }
                 Section {
-                    LocationFormView(text: $newEntry.location, label: "Dive Site", placeholder: "Breakwater")
+                    LocationFormView(text: $newEntry.location, label: "Dive Site", placeholder: "La Jolla Shores")
                 }
                 Section {
                     DiveTypeFormView(diveType: $newEntry.diveType, label: "Dive Type")
@@ -127,20 +128,129 @@ struct EntryFormView: View {
     }
 }
 
+// For location autocomplete
+class LocationSearchViewModel: NSObject, ObservableObject, MKLocalSearchCompleterDelegate {
+    @Published var query = ""
+    @Published var suggestions: [MKLocalSearchCompletion] = []
+
+    private var completer = MKLocalSearchCompleter()
+
+    override init() {
+        super.init()
+        completer.delegate = self
+        completer.resultTypes = .address
+    }
+
+    func updateQuery(_ newQuery: String) {
+        query = newQuery
+        completer.queryFragment = newQuery
+    }
+
+    func completerDidUpdateResults(_ completer: MKLocalSearchCompleter) {
+        self.suggestions = completer.results
+    }
+
+    func completer(_ completer: MKLocalSearchCompleter, didFailWithError error: Error) {
+        print("Autocomplete error: \(error.localizedDescription)")
+    }
+}
+
 struct LocationFormView: View {
     @Binding var text: String
     var label: String
     var placeholder: String
     
+    // Location autocomplete and map view
+    @StateObject private var viewModel = LocationSearchViewModel()
+    @State private var showSuggestions = false
+    @State private var selectedCoordinate: CLLocationCoordinate2D? = nil
+    
     var body: some View {
-        HStack {
-            Text(label)
-                .frame(alignment: .leading)
-            Spacer()
-            TextField(placeholder, text: $text)
-                .multilineTextAlignment(.trailing)
+        VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                Text(label)
+                    .frame(alignment: .leading)
+                Spacer()
+                TextField(placeholder, text: $text)
+                    .multilineTextAlignment(.trailing)
+                    .onChange(of: text) {
+                        showSuggestions = !text.isEmpty
+                        viewModel.updateQuery(text)
+                        selectedCoordinate = nil
+                    }
+            }
+            // Location suggestions list
+            if showSuggestions && !viewModel.suggestions.isEmpty {
+                VStack(spacing: 0) {
+                    Divider()
+                    ForEach(viewModel.suggestions, id: \.self) { suggestion in
+                        Button(action: {
+                            text = suggestion.title /*+ (suggestion.subtitle.isEmpty ? "" : ", \(suggestion.subtitle)")*/
+                            viewModel.suggestions = []
+                            showSuggestions = false
+                            
+                            // look up coordinate for selected suggestion
+                            fetchCoordinate(for: suggestion.title)
+                        }) {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(suggestion.title).bold()
+                                if !suggestion.subtitle.isEmpty {
+                                    Text(suggestion.subtitle)
+                                        .font(.caption)
+                                        .foregroundColor(.gray)
+                                }
+                            }
+                            .padding(.vertical, 4)
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                    }
+                }
+                .background(Color(UIColor.systemBackground))
+                .cornerRadius(6)
+                .shadow(radius: 1)
+            }
+            
+            //Map preview with pin
+            if let coordinate = selectedCoordinate {
+                Map(coordinateRegion: .constant(MKCoordinateRegion(
+                    center: coordinate,
+                    span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
+                )), annotationItems: [MapPinItem(coordinate: coordinate)]) { item in
+                    MapPin(coordinate: item.coordinate)
+                }
+                .frame(height: 200)
+                .cornerRadius(8)
+                .padding(.top)
+            }
         }
     }
+    
+    
+    private func fetchCoordinate(for placeName: String) {
+        let searchRequest = MKLocalSearch.Request()
+        searchRequest.naturalLanguageQuery = placeName
+        
+        let search = MKLocalSearch(request: searchRequest)
+        search.start { response, error in
+            guard
+                error == nil,
+                let coordinate = response?.mapItems.first?.placemark.coordinate
+            else {
+                selectedCoordinate = nil
+                return
+            }
+            
+            DispatchQueue.main.async {
+                selectedCoordinate = coordinate
+            }
+        }
+    }
+}
+
+// Wrapper for Map annotation
+struct MapPinItem: Identifiable {
+    let id = UUID()
+    let coordinate: CLLocationCoordinate2D
 }
 
 struct DiveTypeFormView: View {
