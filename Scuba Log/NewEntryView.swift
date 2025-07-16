@@ -212,40 +212,43 @@ struct LocationFormView: View {
             
             //Map preview with pin
             if let coordinate = selectedCoordinate {
-                Map(coordinateRegion: .constant(MKCoordinateRegion(
-                    center: coordinate,
-                    span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
-                )), annotationItems: [MapPinItem(coordinate: coordinate)]) { item in
-                    MapPin(coordinate: item.coordinate)
+                            Map(position: .constant(.region(MKCoordinateRegion(
+                                center: coordinate,
+                                span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
+                            )))) {
+                                MapKit.Annotation("Location", coordinate: coordinate) {
+                                    Image(systemName: "mappin.circle.fill")
+                                        .foregroundColor(.red)
+                                        .font(.title)
+                                }
+                            }
+                            .frame(height: 200)
+                            .cornerRadius(8)
+                            .padding(.top)
+                        }
+                    }
                 }
-                .frame(height: 200)
-                .cornerRadius(8)
-                .padding(.top)
+
+                private func fetchCoordinate(for placeName: String) {
+                    let searchRequest = MKLocalSearch.Request()
+                    searchRequest.naturalLanguageQuery = placeName
+
+                    let search = MKLocalSearch(request: searchRequest)
+                    search.start { response, error in
+                        guard
+                            error == nil,
+                            let coordinate = response?.mapItems.first?.placemark.coordinate
+                        else {
+                            selectedCoordinate = nil
+                            return
+                        }
+
+                        DispatchQueue.main.async {
+                            selectedCoordinate = coordinate
+                        }
+                    }
+                }
             }
-        }
-    }
-    
-    
-    private func fetchCoordinate(for placeName: String) {
-        let searchRequest = MKLocalSearch.Request()
-        searchRequest.naturalLanguageQuery = placeName
-        
-        let search = MKLocalSearch(request: searchRequest)
-        search.start { response, error in
-            guard
-                error == nil,
-                let coordinate = response?.mapItems.first?.placemark.coordinate
-            else {
-                selectedCoordinate = nil
-                return
-            }
-            
-            DispatchQueue.main.async {
-                selectedCoordinate = coordinate
-            }
-        }
-    }
-}
 
 // Wrapper for Map annotation
 struct MapPinItem: Identifiable {
