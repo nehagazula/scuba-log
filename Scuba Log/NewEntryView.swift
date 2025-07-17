@@ -723,12 +723,13 @@ struct PhotoUploadFormView: View {
     @State private var selectedImages: [IdentifiableImage] = []
     @State private var isLoading = false
     @State private var imageToPreview: IdentifiableImage? = nil
-    @State private var sheetDidAppear = false
+    @State private var sheetDidAppear = false //to ensure page is fully loaded before opening a preview image
 
     var body: some View {
         VStack {
             VStack(alignment: .leading, spacing: 12) {
                 Text("Dive Photos")
+                Divider()
                 
                 PhotosPicker(
                     selection: $selectedItems,
@@ -756,10 +757,10 @@ struct PhotoUploadFormView: View {
                     }
                 }
 
-                if isLoading {
-                    ProgressView()
-                        .padding(.top, 8)
-                }
+//                if isLoading {
+//                    ProgressView()
+//                        .padding(.top, 8)
+//                }
 
                 if !selectedImages.isEmpty {
                     ScrollView(.horizontal, showsIndicators: false) {
@@ -772,6 +773,7 @@ struct PhotoUploadFormView: View {
                                         .frame(width: 100, height: 100)
                                         .clipShape(RoundedRectangle(cornerRadius: 10))
                                         .clipped()
+                                        .contentShape(RoundedRectangle(cornerRadius: 10))
                                         .onTapGesture {
                                             if sheetDidAppear {
                                                 // Small delay to ensure clean presentation
@@ -780,7 +782,7 @@ struct PhotoUploadFormView: View {
                                                 }
                                             }
                                         }
-
+                                    // delete button
                                     Button(action: {
                                         if let index = selectedImages.firstIndex(of: identifiableImage) {
                                             selectedImages.remove(at: index)
