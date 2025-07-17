@@ -712,7 +712,7 @@ struct RatingFormView: View {
         }
     }
 
-// wrap images with an identifiable struct
+ //wrap images with an identifiable struct
 struct IdentifiableImage: Identifiable, Equatable {
     let id = UUID()
     let image: UIImage
@@ -722,68 +722,110 @@ struct PhotoUploadFormView: View {
     @State private var selectedItems: [PhotosPickerItem] = []
     @State private var selectedImages: [IdentifiableImage] = []
     @State private var isLoading = false
+    @State private var imageToPreview: IdentifiableImage? = nil
+    @State private var sheetDidAppear = false
 
     var body: some View {
-        Section(header: Text("Dive Photos")) {
-            PhotosPicker(
-                selection: $selectedItems,
-                maxSelectionCount: 5,
-                matching: .images,
-                photoLibrary: .shared()
-            ) {
-                Label("Select Photos", systemImage: "photo.on.rectangle")
-            }
-            .disabled(selectedImages.count >= 5)
-            .onChange(of: selectedItems) {
-                isLoading = true
-                // Don't clear immediately, just start loading
-                Task {
-                    var loadedImages = [IdentifiableImage]()
-                    for item in selectedItems {
-                        if let data = try? await item.loadTransferable(type: Data.self),
-                           let uiImage = UIImage(data: data) {
-                            loadedImages.append(IdentifiableImage(image: uiImage))
+        VStack {
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Dive Photos")
+                
+                PhotosPicker(
+                    selection: $selectedItems,
+                    maxSelectionCount: 5,
+                    matching: .images,
+                    photoLibrary: .shared()
+                ) {
+                    Label("Select Photos", systemImage: "photo.on.rectangle")
+                }
+                .disabled(selectedImages.count >= 5)
+                .onChange(of: selectedItems) {
+                    isLoading = true
+                    Task {
+                        var loadedImages = [IdentifiableImage]()
+                        for item in selectedItems {
+                            if let data = try? await item.loadTransferable(type: Data.self),
+                               let uiImage = UIImage(data: data) {
+                                loadedImages.append(IdentifiableImage(image: uiImage))
+                            }
+                        }
+                        await MainActor.run {
+                            selectedImages = loadedImages
+                            isLoading = false
                         }
                     }
-                    // load images asynchronously in background threads then jump to main thread when ready to update UI (keeps app responsive)
-                    await MainActor.run {
-                        selectedImages = loadedImages
-                        isLoading = false
+                }
+
+                if isLoading {
+                    ProgressView()
+                        .padding(.top, 8)
+                }
+
+                if !selectedImages.isEmpty {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 8) {
+                            ForEach(selectedImages) { identifiableImage in
+                                ZStack(alignment: .topTrailing) {
+                                    Image(uiImage: identifiableImage.image)
+                                        .resizable()
+                                        .scaledToFill()
+                                        .frame(width: 100, height: 100)
+                                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                                        .clipped()
+                                        .onTapGesture {
+                                            if sheetDidAppear {
+                                                // Small delay to ensure clean presentation
+                                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                                    imageToPreview = identifiableImage
+                                                }
+                                            }
+                                        }
+
+                                    Button(action: {
+                                        if let index = selectedImages.firstIndex(of: identifiableImage) {
+                                            selectedImages.remove(at: index)
+                                            if index < selectedItems.count {
+                                                selectedItems.remove(at: index)
+                                            }
+                                        }
+                                    }) {
+                                        Image(systemName: "xmark.circle.fill")
+                                            .foregroundColor(.white)
+                                            .background(Color.black.opacity(0.6))
+                                            .clipShape(Circle())
+                                    }
+                                    .offset(x: -5, y: 5)
+                                }
+                            }
+                        }
+                        .id(selectedImages.map(\.id))
+                        .padding(.top, 8)
                     }
                 }
             }
+        }
+        .onAppear {
+            // Only trigger once
+            if !sheetDidAppear {
+                sheetDidAppear = true
+            }
+        }
+        .fullScreenCover(item: $imageToPreview) { image in
+            ZStack(alignment: .topTrailing) {
+                Color.black.ignoresSafeArea()
+                Image(uiImage: image.image)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(Color.black)
 
-            if !selectedImages.isEmpty {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 8) {
-                        ForEach(selectedImages) { identifiableImage in
-                            ZStack(alignment: .topTrailing) {
-                                Image(uiImage: identifiableImage.image)
-                                    .resizable()
-                                    .scaledToFill()
-                                    .frame(width: 80, height: 80)
-                                    .clipShape(RoundedRectangle(cornerRadius: 10))
-                                    .clipped()
-
-                                Button(action: {
-                                    if let index = selectedImages.firstIndex(of: identifiableImage) {
-                                        selectedImages.remove(at: index)
-                                        if index < selectedItems.count {
-                                            selectedItems.remove(at: index)
-                                        }
-                                    }
-                                }) {
-                                    Image(systemName: "xmark.circle.fill")
-                                        .foregroundColor(.white)
-                                        .background(Color.black.opacity(0.6))
-                                        .clipShape(Circle())
-                                }
-                                .offset(x: -5, y: 5)
-                            }
-                        }
-                    }
-                    .id(selectedImages.map(\.id))
-                    .padding(.top, 8)
+                Button {
+                    imageToPreview = nil
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 30))
+                        .foregroundColor(.white)
+                        .padding()
                 }
             }
         }
