@@ -7,6 +7,7 @@
 
 import SwiftUI
 import MapKit
+import PhotosUI
 
 struct NewEntryView: View {
     @Binding var isPresented: Bool
@@ -120,6 +121,10 @@ struct EntryFormView: View {
                 Section {
                     NotesFomView(notes: $newEntry.notes, label: "Notes")
                 }
+                
+                Section {
+                    PhotoUploadFormView()
+                }
             }
             
         }
@@ -128,7 +133,7 @@ struct EntryFormView: View {
     }
 }
 
-// For location autocomplete
+// View model for location autocomplete/suggestions
 class LocationSearchViewModel: NSObject, ObservableObject, MKLocalSearchCompleterDelegate {
     @Published var query = ""
     @Published var suggestions: [MKLocalSearchCompletion] = []
@@ -185,11 +190,17 @@ struct LocationFormView: View {
                     Divider()
                     ForEach(viewModel.suggestions, id: \.self) { suggestion in
                         Button(action: {
+                            // set the selected text
                             text = suggestion.title /*+ (suggestion.subtitle.isEmpty ? "" : ", \(suggestion.subtitle)")*/
+                            
+                            // clear suggestions and hide list
                             viewModel.suggestions = []
                             showSuggestions = false
                             
-                            // look up coordinate for selected suggestion
+                            //dismiss keyboard
+                            //UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                            
+                            // look up coordinates for selected suggestion
                             fetchCoordinate(for: suggestion.title)
                         }) {
                             VStack(alignment: .leading, spacing: 2) {
@@ -216,7 +227,7 @@ struct LocationFormView: View {
                                 center: coordinate,
                                 span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
                             )))) {
-                                MapKit.Annotation("Location", coordinate: coordinate) {
+                                Annotation("Location", coordinate: coordinate) {
                                     Image(systemName: "mappin.circle.fill")
                                         .foregroundColor(.red)
                                         .font(.title)
@@ -700,10 +711,49 @@ struct RatingFormView: View {
         }
     }
 
+struct PhotoUploadFormView: View {
+    @State private var selectedItems: [PhotosPickerItem] = []
+    @State private var selectedImages: [UIImage] = []
 
+    var body: some View {
+        Section(header: Text("Dive Photos")) {
+            PhotosPicker(
+                selection: $selectedItems,
+                maxSelectionCount: 5,
+                matching: .images,
+                photoLibrary: .shared()
+            ) {
+                Label("Select Photos", systemImage: "photo.on.rectangle")
+            }
+            .onChange(of: selectedItems) {
+                selectedImages = []
+                for item in selectedItems {
+                    Task {
+                        if let data = try? await item.loadTransferable(type: Data.self),
+                           let image = UIImage(data: data) {
+                            await MainActor.run {
+                                selectedImages.append(image)
+                            }
+                        }
+                    }
+                }
+            }
 
-
-
-
-
-
+            if !selectedImages.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        ForEach(selectedImages, id: \.self) { image in
+                            Image(uiImage: image)
+                                .resizable()
+                                .scaledToFill()
+                                .frame(width: 80, height: 80)
+                                .clipShape(RoundedRectangle(cornerRadius: 10))
+                                .clipped()
+                        }
+                    }
+                    .padding(.top, 8)
+                }
+            }
+        }
+    }
+} 
