@@ -8,6 +8,7 @@
 import SwiftUI
 import MapKit
 import PhotosUI
+import CoreGraphics
 
 struct NewEntryView: View {
     @Binding var isPresented: Bool
@@ -711,9 +712,16 @@ struct RatingFormView: View {
         }
     }
 
+// wrap images with an identifiable struct
+struct IdentifiableImage: Identifiable, Equatable {
+    let id = UUID()
+    let image: UIImage
+}
+
 struct PhotoUploadFormView: View {
     @State private var selectedItems: [PhotosPickerItem] = []
-    @State private var selectedImages: [UIImage] = []
+    @State private var selectedImages: [IdentifiableImage] = []
+    @State private var isLoading = false
 
     var body: some View {
         Section(header: Text("Dive Photos")) {
@@ -725,16 +733,22 @@ struct PhotoUploadFormView: View {
             ) {
                 Label("Select Photos", systemImage: "photo.on.rectangle")
             }
+            .disabled(selectedImages.count >= 5)
             .onChange(of: selectedItems) {
-                selectedImages = []
-                for item in selectedItems {
-                    Task {
+                isLoading = true
+                // Don't clear immediately, just start loading
+                Task {
+                    var loadedImages = [IdentifiableImage]()
+                    for item in selectedItems {
                         if let data = try? await item.loadTransferable(type: Data.self),
-                           let image = UIImage(data: data) {
-                            await MainActor.run {
-                                selectedImages.append(image)
-                            }
+                           let uiImage = UIImage(data: data) {
+                            loadedImages.append(IdentifiableImage(image: uiImage))
                         }
+                    }
+                    // load images asynchronously in background threads then jump to main thread when ready to update UI (keeps app responsive)
+                    await MainActor.run {
+                        selectedImages = loadedImages
+                        isLoading = false
                     }
                 }
             }
@@ -742,18 +756,36 @@ struct PhotoUploadFormView: View {
             if !selectedImages.isEmpty {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 8) {
-                        ForEach(selectedImages, id: \.self) { image in
-                            Image(uiImage: image)
-                                .resizable()
-                                .scaledToFill()
-                                .frame(width: 80, height: 80)
-                                .clipShape(RoundedRectangle(cornerRadius: 10))
-                                .clipped()
+                        ForEach(selectedImages) { identifiableImage in
+                            ZStack(alignment: .topTrailing) {
+                                Image(uiImage: identifiableImage.image)
+                                    .resizable()
+                                    .scaledToFill()
+                                    .frame(width: 80, height: 80)
+                                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                                    .clipped()
+
+                                Button(action: {
+                                    if let index = selectedImages.firstIndex(of: identifiableImage) {
+                                        selectedImages.remove(at: index)
+                                        if index < selectedItems.count {
+                                            selectedItems.remove(at: index)
+                                        }
+                                    }
+                                }) {
+                                    Image(systemName: "xmark.circle.fill")
+                                        .foregroundColor(.white)
+                                        .background(Color.black.opacity(0.6))
+                                        .clipShape(Circle())
+                                }
+                                .offset(x: -5, y: 5)
+                            }
                         }
                     }
+                    .id(selectedImages.map(\.id))
                     .padding(.top, 8)
                 }
             }
         }
     }
-} 
+}
