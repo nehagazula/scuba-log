@@ -21,40 +21,47 @@ struct ContentView: View {
     
     var body: some View {
         NavigationView {
-            List {
-                ForEach(entries) { entry in
-                    NavigationLink {
-                        EntryView(entry: entry)
-                    } label: {
-                        VStack(alignment: .leading, spacing: 4){
-                            Text("\(entry.title)").bold()
-                            Text("\(entry.startDate, format: Date.FormatStyle(date: .abbreviated)), \(entry.location)").font(.footnote)
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Total dives: \(entries.count)")
+                    .font(.subheadline)
+                    .foregroundColor(.black)
+                    .padding(.horizontal)
+                
+                List {
+                    ForEach(entries) { entry in
+                        NavigationLink {
+                            EntryView(entry: entry)
+                        } label: {
+                            VStack(alignment: .leading, spacing: 4){
+                                Text("\(entry.title)").bold()
+                                Text("\(entry.startDate, format: Date.FormatStyle(date: .abbreviated)), \(entry.location)").font(.footnote)
+                            }
+                        }
+                    }
+                    .onDelete(perform: deleteItems)
+                }
+                .toolbar {
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        EditButton()
+                    }
+                    ToolbarItem {
+                        Button(action: {
+                            showingNewEntryView = true
+                        }) {
+                            Label("Add Item", systemImage: "plus")
+                        }
+                        .padding()
+                    }
+                    ToolbarItem(placement: .navigationBarLeading) {
+                        Button {
+                            showingSettings = true
+                        } label: {
+                            Image(systemName: "gear")
                         }
                     }
                 }
-                .onDelete(perform: deleteItems)
+                .navigationBarTitle("Scuba Log", displayMode: .large)
             }
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    EditButton()
-                }
-                ToolbarItem {
-                    Button(action: {
-                        showingNewEntryView = true
-                    }) {
-                        Label("Add Item", systemImage: "plus")
-                    }
-                    .padding()
-                }
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button {
-                        showingSettings = true
-                    } label: {
-                        Image(systemName: "gear")
-                    }
-                }
-            }
-            .navigationBarTitle("Scuba Log", displayMode: .large)
         }
         .sheet(isPresented: $showingNewEntryView) {
             NewEntryView(isPresented: $showingNewEntryView, addItem: addItem)
