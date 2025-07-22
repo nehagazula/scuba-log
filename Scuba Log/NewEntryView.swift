@@ -86,7 +86,7 @@ struct EntryFormView: View {
             // General
             Form {
                 Section(header: Text("General")) {
-                    LocationFormView(text: $entry.title, label: "Dive Title", placeholder: "My dive")
+                    TitleFormView(text: $entry.title, label: "Dive Title", placeholder: "My dive")
                 }
                 Section {
                     LocationFormView(text: $entry.location, label: "Dive Site", placeholder: "La Jolla Shores")
@@ -152,6 +152,20 @@ struct EntryFormView: View {
         }
         .tabViewStyle(.page(indexDisplayMode: .always))
         .indexViewStyle(.page(backgroundDisplayMode: .always))
+    }
+}
+
+struct TitleFormView: View {
+    @Binding var text: String
+    var label: String
+    var placeholder: String
+
+    var body: some View {
+        HStack {
+            Text(label)
+            TextField(placeholder, text: $text)
+                .multilineTextAlignment(.trailing)
+        }
     }
 }
 
