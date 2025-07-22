@@ -12,7 +12,6 @@ import CoreGraphics
 
 struct NewEntryView: View {
     @Binding var isPresented: Bool
-    @State private var newItemTitle: String = ""
     @State private var newEntry: Entry = Entry(timestamp: Date())
 //    @State private var isMetric: Bool = false
     var addItem: (Entry) -> Void
@@ -21,8 +20,9 @@ struct NewEntryView: View {
         NavigationView {
             VStack {
                 ButtonView(newEntry: $newEntry, isPresented: $isPresented, addItem: addItem)
-                EntryFormView(newEntry: $newEntry)
+                EntryFormView(entry: $newEntry)
             }
+            .navigationTitle("New Dive")
         }
     }
 }
@@ -41,12 +41,6 @@ struct ButtonView: View {
             
             Spacer()
             
-            Text("New Dive")
-                .font(.headline)
-                .padding()
-            
-            Spacer()
-            
             Button("Create") {
                 addItem(newEntry)
                 isPresented = false
@@ -57,28 +51,55 @@ struct ButtonView: View {
     }
 }
 
+struct EditEntryView: View {
+    @Binding var isPresented: Bool
+    @Binding var entryToEdit: Entry
+    var saveChanges: (Entry) -> Void
+    
+    var body: some View {
+        NavigationView {
+            VStack {
+                HStack {
+                    Button("Cancel") {
+                        isPresented = false
+                    }
+                    Spacer()
+                    Button("Save") {
+                        saveChanges(entryToEdit)
+                        isPresented = false
+                    }
+                }
+                .padding()
+                
+                EntryFormView(entry: $entryToEdit)
+            }
+            .navigationTitle("Edit Dive")
+        }
+    }
+}
+
 struct EntryFormView: View {
-    @Binding var newEntry: Entry
+    @Binding var entry: Entry
     
     var body: some View {
         TabView {
             // General
             Form {
                 Section(header: Text("General")) {
-                    LocationFormView(text: $newEntry.title, label: "Dive Title", placeholder: "My dive")
+                    LocationFormView(text: $entry.title, label: "Dive Title", placeholder: "My dive")
                 }
                 Section {
-                    LocationFormView(text: $newEntry.location, label: "Dive Site", placeholder: "La Jolla Shores")
+                    LocationFormView(text: $entry.location, label: "Dive Site", placeholder: "La Jolla Shores")
                 }
                 Section {
-                    DiveTypeFormView(diveType: $newEntry.diveType, label: "Dive Type")
+                    DiveTypeFormView(diveType:$entry.diveType, label: "Dive Type")
                 }
                 Section {
-                    DateFormView(date: $newEntry.startDate, label: "Start")
-                    DateFormView(date: $newEntry.endDate, label: "End")
+                    DateFormView(date: $entry.startDate, label: "Start")
+                    DateFormView(date:$entry.endDate, label: "End")
                 }
                 Section {
-                    DepthFormView(value: $newEntry.maxDepth, label: "Maximum Depth")
+                    DepthFormView(value: $entry.maxDepth, label: "Maximum Depth")
                 }
             }
             
@@ -86,16 +107,16 @@ struct EntryFormView: View {
             
             Form {
                 Section(header: Text("Equipment")) {
-                    WeightFormView(weight: $newEntry.weight, weightCategory: $newEntry.weightCategory, label: "Weight")
+                    WeightFormView(weight: $entry.weight, weightCategory: $entry.weightCategory, label: "Weight")
                 }
                 Section {
-                    TankFormView(tankSize: $newEntry.tankSize, tankMaterial: $newEntry.tankMaterial, gasMixture: $newEntry.gasMixture, label: "Cylinder Size")
+                    TankFormView(tankSize:  $entry.tankSize, tankMaterial:  $entry.tankMaterial, gasMixture:  $entry.gasMixture, label: "Cylinder Size")
                 }
                 Section {
-                    CylinderPressureFormView(startPressure: $newEntry.startPressure, endPressure: $newEntry.endPressure)
+                    CylinderPressureFormView(startPressure: $entry.startPressure, endPressure:  $entry.endPressure)
                 }
                 Section {
-                    SuitFormView(suitType: $newEntry.suitType)
+                    SuitFormView(suitType:  $entry.suitType)
                 }
                 Section {
                     OtherGearFormView()
@@ -104,23 +125,23 @@ struct EntryFormView: View {
             // Conditions
             Form {
                 Section(header: Text("Conditions")) {
-                    WaterFormView(waterType: $newEntry.waterType, waterBody: $newEntry.waterBody, waves: $newEntry.waves, current: $newEntry.current, surge: $newEntry.surge)
+                    WaterFormView(waterType: $entry.waterType, waterBody: $entry.waterBody, waves:  $entry.waves, current:  $entry.current, surge: $entry.surge)
                 }
                 Section {
-                    VisibilityFormView(visibility: $newEntry.visibility)
+                    VisibilityFormView(visibility:  $entry.visibility)
                 }
                 Section {
-                    TemperatureFormView(surfTemp: $newEntry.surfTemp, airTemp: $newEntry.airTemp, bottomTemp: $newEntry.bottomTemp)
+                    TemperatureFormView(surfTemp:  $entry.surfTemp, airTemp:  $entry.airTemp, bottomTemp:  $entry.bottomTemp)
                 }
             }
             // Experience
             Form {
                 Section(header: Text("Experience")) {
-                    RatingFormView(rating: $newEntry.rating, label: "Rating")
+                    RatingFormView(rating:  $entry.rating, label: "Rating")
                 }
                 
                 Section {
-                    NotesFomView(notes: $newEntry.notes, label: "Notes")
+                    NotesFomView(notes:  $entry.notes, label: "Notes")
                 }
                 
                 Section {

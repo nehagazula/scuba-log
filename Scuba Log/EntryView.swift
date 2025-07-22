@@ -11,6 +11,16 @@ import MapKit
 struct EntryView: View {
     let entry: Entry
     
+    @State private var isEditing = false
+    @State private var editableEntry: Entry
+
+       // Initialize editableEntry with entry value
+       init(entry: Entry) {
+           self.entry = entry
+           _editableEntry = State(initialValue: entry)
+       }
+    
+    // makes background of a section grey within a rectangular box
     struct SectionCard<Content: View>: View {
         let content: Content
         init(@ViewBuilder content: () -> Content) {
@@ -28,7 +38,7 @@ struct EntryView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
-
+                
                 // General
                 SectionHeader("General")
                 SectionCard {
@@ -41,58 +51,75 @@ struct EntryView: View {
                         EntryRow(label: "Max Depth", value: depthText)
                     }
                 }
-
+                
                 // Equipment
                 SectionHeader("Equipment")
-                VStack(alignment: .leading, spacing: 8) {
-                    EntryRow(label: "Weight", value: weightText)
-                    EntryRow(label: "Weight Type", value: entry.weightCategory?.rawValue.capitalized)
-                    EntryRow(label: "Tank Size", value: tankText)
-                    EntryRow(label: "Tank Material", value: entry.tankMaterial?.rawValue.capitalized)
-                    EntryRow(label: "Gas Mixture", value: entry.gasMixture?.rawValue.capitalized)
-                    EntryRow(label: "Start Pressure", value: pressureText(entry.startPressure))
-                    EntryRow(label: "End Pressure", value: pressureText(entry.endPressure))
-                    EntryRow(label: "Suit Type", value: entry.suitType?.name)
-                }
-
-                // Conditions
-                SectionHeader("Conditions")
-                VStack(alignment: .leading, spacing: 8) {
-                    EntryRow(label: "Water Type", value: entry.waterType?.rawValue.capitalized)
-                    EntryRow(label: "Water Body", value: entry.waterBody?.rawValue.capitalized)
-                    EntryRow(label: "Waves", value: entry.waves?.rawValue.capitalized)
-                    EntryRow(label: "Current", value: entry.current?.rawValue.capitalized)
-                    EntryRow(label: "Surge", value: entry.surge?.rawValue.capitalized)
-                    EntryRow(label: "Visibility", value: "\(Int(entry.visibility))%")
-                    EntryRow(label: "Air Temp", value: tempText(entry.airTemp))
-                    EntryRow(label: "Surface Temp", value: tempText(entry.surfTemp))
-                    EntryRow(label: "Bottom Temp", value: tempText(entry.bottomTemp))
-                }
-
-                // Experience
-                SectionHeader("Experience")
-                VStack(alignment: .leading, spacing: 8) {
-                    EntryRow(label: "Rating", value: "\(entry.rating)/5")
-                    if !entry.notes.isEmpty {
-                        Text("Notes:")
-                            .font(.subheadline.bold())
-                        Text(entry.notes)
-                            .font(.body)
-                            .foregroundColor(.primary)
-                            .padding(.bottom, 8)
+                SectionCard {
+                    VStack(alignment: .leading, spacing: 8) {
+                        EntryRow(label: "Weight", value: weightText)
+                        EntryRow(label: "Weight Type", value: entry.weightCategory?.rawValue.capitalized)
+                        EntryRow(label: "Tank Size", value: tankText)
+                        EntryRow(label: "Tank Material", value: entry.tankMaterial?.rawValue.capitalized)
+                        EntryRow(label: "Gas Mixture", value: entry.gasMixture?.rawValue.capitalized)
+                        EntryRow(label: "Start Pressure", value: pressureText(entry.startPressure))
+                        EntryRow(label: "End Pressure", value: pressureText(entry.endPressure))
+                        EntryRow(label: "Suit Type", value: entry.suitType?.name)
                     }
                 }
-
+                
+                // Conditions
+                SectionHeader("Conditions")
+                SectionCard {
+                    VStack(alignment: .leading, spacing: 8) {
+                        EntryRow(label: "Water Type", value: entry.waterType?.rawValue.capitalized)
+                        EntryRow(label: "Water Body", value: entry.waterBody?.rawValue.capitalized)
+                        EntryRow(label: "Waves", value: entry.waves?.rawValue.capitalized)
+                        EntryRow(label: "Current", value: entry.current?.rawValue.capitalized)
+                        EntryRow(label: "Surge", value: entry.surge?.rawValue.capitalized)
+                        EntryRow(label: "Visibility", value: "\(Int(entry.visibility))%")
+                        EntryRow(label: "Air Temp", value: tempText(entry.airTemp))
+                        EntryRow(label: "Surface Temp", value: tempText(entry.surfTemp))
+                        EntryRow(label: "Bottom Temp", value: tempText(entry.bottomTemp))
+                    }
+                }
+                
+                // Experience
+                SectionHeader("Experience")
+                SectionCard {
+                    VStack(alignment: .leading, spacing: 8) {
+                        EntryRow(label: "Rating", value: "\(entry.rating)/5")
+                        if !entry.notes.isEmpty {
+                            Text("Notes:")
+                                .font(.subheadline.bold())
+                            Text(entry.notes)
+                                .font(.body)
+                                .foregroundColor(.primary)
+                                .padding(.bottom, 8)
+                        }
+                    }
+                }
+                
                 // Photos
                 // You could render photos here if saved — let me know if you store them.
-
+                
             }
             .padding()
         }
         .navigationTitle("Dive Details")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            Button("Edit") {
+                isEditing = true
+            }
+        }
+        .sheet(isPresented: $isEditing) {
+            EditEntryView(isPresented: $isEditing, entryToEdit: $editableEntry) { updatedEntry in
+                // Handle save here
+                print("Updated entry: \(updatedEntry)")
+            }
+        }
     }
-
+    
     // Computed Display Texts
     var isMetric: Bool {
         UserDefaults.standard.bool(forKey: "isMetric")
