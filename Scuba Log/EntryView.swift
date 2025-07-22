@@ -8,6 +8,64 @@
 import SwiftUI
 import MapKit
 
+struct MapPreview: View {
+    var locationName: String
+
+    @State private var region = MKCoordinateRegion(
+        center: CLLocationCoordinate2D(latitude: 0, longitude: 0),
+        span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
+    )
+    @State private var coordinate: CLLocationCoordinate2D?
+
+    var body: some View {
+        Group {
+            if let coordinate = coordinate {
+                Map(position: .constant(.region(region))) {
+                    Marker(locationName, coordinate: coordinate)
+                }
+                .frame(height: 200)
+                .cornerRadius(12)
+                .onTapGesture {
+                    openInAppleMaps(coordinate: coordinate)
+                }
+            } else {
+                Text("Loading map...")
+                    .frame(height: 200)
+                    .frame(maxWidth: .infinity)
+                    .background(Color.gray.opacity(0.1))
+                    .cornerRadius(12)
+            }
+        }
+        .onAppear {
+            geocode()
+        }
+    }
+
+    private func geocode() {
+        let geocoder = CLGeocoder()
+        geocoder.geocodeAddressString(locationName) { placemarks, error in
+            guard let placemark = placemarks?.first,
+                  let loc = placemark.location else { return }
+            let coord = loc.coordinate
+            self.coordinate = coord
+            self.region.center = coord
+        }
+    }
+
+    private func openInAppleMaps(coordinate: CLLocationCoordinate2D) {
+        let placemark = MKPlacemark(coordinate: coordinate)
+        let mapItem = MKMapItem(placemark: placemark)
+        mapItem.name = locationName
+        mapItem.openInMaps(launchOptions: nil)
+    }
+
+    struct MapPin: Identifiable {
+        let id = UUID()
+        let coordinate: CLLocationCoordinate2D
+    }
+}
+
+
 struct EntryView: View {
     let entry: Entry
     
@@ -45,6 +103,11 @@ struct EntryView: View {
                     VStack(alignment: .leading, spacing: 8) {
                         EntryRow(label: "Title", value: entry.title)
                         EntryRow(label: "Location", value: entry.location)
+                        
+                        if !entry.location.isEmpty {
+                            MapPreview(locationName: entry.location)
+                        }
+                        
                         EntryRow(label: "Dive Type", value: entry.diveType?.rawValue.capitalized)
                         EntryRow(label: "Start", value: entry.startDate.formatted(.dateTime))
                         EntryRow(label: "End", value: entry.endDate.formatted(.dateTime))
