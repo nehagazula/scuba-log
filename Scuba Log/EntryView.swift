@@ -126,6 +126,8 @@ struct EntryView: View {
                         EntryRow(label: "Gas Mixture", value: entry.gasMixture?.rawValue.capitalized)
                         EntryRow(label: "Start Pressure", value: pressureText(entry.startPressure))
                         EntryRow(label: "End Pressure", value: pressureText(entry.endPressure))
+                        let pressureUsed = (entry.startPressure ?? 0) - (entry.endPressure ?? 0)
+                        EntryRow(label: "Amount Used", value: pressureUsed > 0 ? pressureText(pressureUsed) : "--")
                         EntryRow(label: "Suit Type", value: entry.suitType?.name)
                     }
                 }
@@ -191,28 +193,28 @@ struct EntryView: View {
     var depthText: String {
         let unit = isMetric ? "m" : "ft"
         let value = isMetric ? entry.maxDepth : entry.maxDepth * 3.28084
-        return value > 0 ? "\(String(format: "%.1f", value)) \(unit)" : "N/A"
+        return value > 0 ? "\(String(format: "%.1f", value)) \(unit)" : "--"
     }
 
     var weightText: String {
-        guard let weight = entry.weight else { return "N/A" }
+        guard let weight = entry.weight else { return "--" }
         let unit = isMetric ? "kg" : "lb"
         return "\(String(format: "%.1f", weight)) \(unit)"
     }
 
     var tankText: String {
-        guard let tank = entry.tankSize else { return "N/A" }
+        guard let tank = entry.tankSize else { return "--" }
         let unit = isMetric ? "L" : "cu ft"
         return "\(String(format: "%.1f", tank)) \(unit)"
     }
 
     func pressureText(_ value: Float?) -> String {
-        guard let value = value else { return "N/A" }
+        guard let value = value else { return "--" }
         return "\(Int(value)) \(isMetric ? "Bar" : "PSI")"
     }
 
     func tempText(_ value: Float?) -> String {
-        guard let value = value else { return "N/A" }
+        guard let value = value else { return "--" }
         return "\(String(format: "%.1f", value))°\(isMetric ? "C" : "F")"
     }
 }
@@ -229,7 +231,7 @@ struct EntryRow: View {
                 .font(.subheadline)
                 .foregroundColor(.secondary)
             Spacer()
-            Text(value ?? "N/A")
+            Text(value ?? "--")
                 .font(.subheadline)
                 .foregroundColor(.primary)
                 .multilineTextAlignment(.trailing)

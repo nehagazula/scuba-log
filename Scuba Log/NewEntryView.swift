@@ -32,6 +32,16 @@ struct ButtonView: View {
     @Binding var isPresented: Bool
     var addItem: (Entry) -> Void
     
+    private var isGeneralInfoComplete: Bool {
+            let hasTitle = !(newEntry.title.isEmpty)
+            let hasLocation = !(newEntry.location.isEmpty)
+            let hasStartDate = true
+            let hasEndDate = true
+            let hasDepth = newEntry.maxDepth > 0
+
+            return hasTitle && hasLocation && hasStartDate && hasEndDate && hasDepth
+        }
+    
     var body: some View {
         HStack {
             Button("Cancel") {
@@ -47,6 +57,7 @@ struct ButtonView: View {
             }
             .font(.headline)
             .padding()
+            .disabled(!isGeneralInfoComplete)
         }
     }
 }
@@ -86,20 +97,20 @@ struct EntryFormView: View {
             // General
             Form {
                 Section(header: Text("General")) {
-                    TitleFormView(text: $entry.title, label: "Dive Title", placeholder: "My dive")
+                    TitleFormView(text: $entry.title, label: "Dive Title*", placeholder: "My dive")
                 }
                 Section {
-                    LocationFormView(text: $entry.location, label: "Dive Site", placeholder: "La Jolla Shores")
+                    LocationFormView(text: $entry.location, label: "Dive Site*", placeholder: "La Jolla Shores")
                 }
                 Section {
                     DiveTypeFormView(diveType:$entry.diveType, label: "Dive Type")
                 }
                 Section {
-                    DateFormView(date: $entry.startDate, label: "Start")
-                    DateFormView(date:$entry.endDate, label: "End")
+                    DateFormView(date: $entry.startDate, label: "Start*")
+                    DateFormView(date:$entry.endDate, label: "End*")
                 }
                 Section {
-                    DepthFormView(value: $entry.maxDepth, label: "Maximum Depth")
+                    DepthFormView(value: $entry.maxDepth, label: "Maximum Depth*")
                 }
             }
             
