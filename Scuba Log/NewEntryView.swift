@@ -213,6 +213,7 @@ struct LocationFormView: View {
     // Location autocomplete and map view
     @StateObject private var viewModel = LocationSearchViewModel()
     @State private var showSuggestions = false
+    @State private var didSelectSuggestion = false
     @State private var selectedCoordinate: CLLocationCoordinate2D? = nil
     
     var body: some View {
@@ -224,6 +225,10 @@ struct LocationFormView: View {
                 TextField(placeholder, text: $text)
                     .multilineTextAlignment(.trailing)
                     .onChange(of: text) {
+                        if didSelectSuggestion {
+                            didSelectSuggestion = false
+                            return
+                        }
                         showSuggestions = !text.isEmpty
                         viewModel.updateQuery(text)
                         selectedCoordinate = nil
@@ -236,8 +241,9 @@ struct LocationFormView: View {
                     ForEach(viewModel.suggestions, id: \.self) { suggestion in
                         Button(action: {
                             // set the selected text
-                            text = suggestion.title /*+ (suggestion.subtitle.isEmpty ? "" : ", \(suggestion.subtitle)")*/
-                            
+                            didSelectSuggestion = true
+                            text = suggestion.title
+
                             // clear suggestions and hide list
                             viewModel.suggestions = []
                             showSuggestions = false
