@@ -22,24 +22,39 @@ struct ContentView: View {
     var body: some View {
         NavigationView {
             VStack(alignment: .leading, spacing: 8) {
-                Text("Total dives: \(entries.count)")
-                    .font(.subheadline)
-                    .foregroundColor(.black)
-                    .padding(.horizontal)
+                HStack {
+                    Text("Total dives: \(entries.count)")
+                    Spacer()
+                    Text("Dive time: \(totalTimeFormatted)")
+                }
+                .font(.subheadline)
+                .foregroundColor(.primary)
+                .padding(.horizontal)
                 
                 List {
                     ForEach(entries) { entry in
-                        NavigationLink {
-                            EntryView(entry: entry)
-                        } label: {
-                            VStack(alignment: .leading, spacing: 4){
+                        ZStack {
+                            NavigationLink(destination: EntryView(entry: entry)) {
+                                EmptyView()
+                            }
+                            .opacity(0)
+
+                            VStack(alignment: .leading, spacing: 4) {
                                 Text("\(entry.title)").bold()
                                 Text("\(entry.startDate, format: Date.FormatStyle(date: .abbreviated)), \(entry.location)").font(.footnote)
+                                    .foregroundColor(.secondary)
                             }
+                            .padding()
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(Color(.systemGray6))
+                            .cornerRadius(12)
                         }
                     }
                     .onDelete(perform: deleteItems)
+                    .listRowSeparator(.hidden)
+                    .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
                 }
+                .listStyle(.plain)
                 .toolbar {
                     ToolbarItem(placement: .navigationBarTrailing) {
                         EditButton()
@@ -60,7 +75,8 @@ struct ContentView: View {
                         }
                     }
                 }
-                .navigationBarTitle("Scuba Log", displayMode: .large)
+                .navigationTitle("Scuba Log")
+                .navigationBarTitleDisplayMode(.large)
             }
         }
         .sheet(isPresented: $showingNewEntryView) {
@@ -75,6 +91,13 @@ struct ContentView: View {
         .preferredColorScheme(appAppearance.colorScheme)
     }
     
+    private var totalTimeFormatted: String {
+        let totalSeconds = entries.reduce(0.0) { $0 + $1.endDate.timeIntervalSince($1.startDate) }
+        let hours = Int(totalSeconds) / 3600
+        let minutes = (Int(totalSeconds) % 3600) / 60
+        return "\(hours)h \(minutes)m"
+    }
+
     private func addItem(_ newItem: Entry) {
         withAnimation {
             modelContext.insert(newItem)

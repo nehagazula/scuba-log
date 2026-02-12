@@ -8,7 +8,7 @@
 import SwiftUI
 import MapKit
 import PhotosUI
-import CoreGraphics
+
 
 struct NewEntryView: View {
     @Binding var isPresented: Bool
@@ -33,13 +33,11 @@ struct ButtonView: View {
     var addItem: (Entry) -> Void
     
     private var isGeneralInfoComplete: Bool {
-            let hasTitle = !(newEntry.title.isEmpty)
-            let hasLocation = !(newEntry.location.isEmpty)
-            let hasStartDate = true
-            let hasEndDate = true
+            let hasTitle = !newEntry.title.isEmpty
+            let hasLocation = !newEntry.location.isEmpty
             let hasDepth = newEntry.maxDepth > 0
 
-            return hasTitle && hasLocation && hasStartDate && hasEndDate && hasDepth
+            return hasTitle && hasLocation && hasDepth
         }
     
     var body: some View {
@@ -268,50 +266,44 @@ struct LocationFormView: View {
                 .shadow(radius: 1)
             }
             
-            //Map preview with pin
+            // Map preview with pin
             if let coordinate = selectedCoordinate {
-                            Map(position: .constant(.region(MKCoordinateRegion(
-                                center: coordinate,
-                                span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
-                            )))) {
-                                Annotation("Location", coordinate: coordinate) {
-                                    Image(systemName: "mappin.circle.fill")
-                                        .foregroundColor(.red)
-                                        .font(.title)
-                                }
-                            }
-                            .frame(height: 200)
-                            .cornerRadius(8)
-                            .padding(.top)
-                        }
+                Map(position: .constant(.region(MKCoordinateRegion(
+                    center: coordinate,
+                    span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
+                )))) {
+                    Annotation("Location", coordinate: coordinate) {
+                        Image(systemName: "mappin.circle.fill")
+                            .foregroundColor(.red)
+                            .font(.title)
                     }
                 }
+                .frame(height: 200)
+                .cornerRadius(8)
+                .padding(.top)
+            }
+        }
+    }
 
-                private func fetchCoordinate(for placeName: String) {
-                    let searchRequest = MKLocalSearch.Request()
-                    searchRequest.naturalLanguageQuery = placeName
+    private func fetchCoordinate(for placeName: String) {
+        let searchRequest = MKLocalSearch.Request()
+        searchRequest.naturalLanguageQuery = placeName
 
-                    let search = MKLocalSearch(request: searchRequest)
-                    search.start { response, error in
-                        guard
-                            error == nil,
-                            let coordinate = response?.mapItems.first?.placemark.coordinate
-                        else {
-                            selectedCoordinate = nil
-                            return
-                        }
-
-                        DispatchQueue.main.async {
-                            selectedCoordinate = coordinate
-                        }
-                    }
-                }
+        let search = MKLocalSearch(request: searchRequest)
+        search.start { response, error in
+            guard
+                error == nil,
+                let coordinate = response?.mapItems.first?.placemark.coordinate
+            else {
+                selectedCoordinate = nil
+                return
             }
 
-// Wrapper for Map annotation
-struct MapPinItem: Identifiable {
-    let id = UUID()
-    let coordinate: CLLocationCoordinate2D
+            DispatchQueue.main.async {
+                selectedCoordinate = coordinate
+            }
+        }
+    }
 }
 
 struct DiveTypeFormView: View {
@@ -487,7 +479,7 @@ struct GearButton: View {
                 .frame(maxWidth: .infinity)
                 .padding()
                 .background(isSelected ? Color.blue : Color.gray.opacity(0.2))
-                .foregroundColor(isSelected ? .white : .black)
+                .foregroundColor(isSelected ? .white : .primary)
                 .cornerRadius(8)
                 .overlay(
                     RoundedRectangle(cornerRadius: 8)
@@ -564,7 +556,7 @@ struct CylinderPressureFormView: View {
                 Text("Amount Used")
                     .frame(alignment: .leading)
                 Spacer()
-            Text(calculatedAmountUsed != nil ? "\(calculatedAmountUsed!, format: .number) PSI" : "--")
+            Text(calculatedAmountUsed != nil ? "\(calculatedAmountUsed!, format: .number) \(metricPlaceholder)" : "--")
                 .foregroundColor(calculatedAmountUsed != nil ? .primary : .gray)
         }
         
