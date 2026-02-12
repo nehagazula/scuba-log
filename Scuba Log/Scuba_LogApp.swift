@@ -14,7 +14,13 @@ struct Scuba_LogApp: App {
         let schema = Schema([
             Entry.self,
         ])
-        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true) //false
+        // To enable iCloud sync, add the CloudKit capability in Xcode first,
+        // then change .none to .private("iCloud.com.neha.ScubaLog")
+        let modelConfiguration = ModelConfiguration(
+            schema: schema,
+            isStoredInMemoryOnly: false,
+            cloudKitDatabase: .private("iCloud.com.neha.ScubaLog")
+        )
 
         do {
             return try ModelContainer(for: schema, configurations: [modelConfiguration])

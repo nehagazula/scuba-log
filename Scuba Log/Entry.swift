@@ -10,33 +10,33 @@ import SwiftData
 
 @Model
 final class Entry {
-    @Attribute(.unique) var id: UUID
-    @Attribute var timestamp: Date
-    @Attribute var title: String
-    @Attribute var location: String
-    @Attribute var diveType: diveCategory?
-    @Attribute var startDate: Date
-    @Attribute var endDate: Date
-    @Attribute var maxDepth: Float // meters
-    @Attribute var weight: Float? //kg
-    @Attribute var weightCategory: Weighting?
-    @Attribute var tankSize: Float?
-    @Attribute var tankMaterial: tankCategory?
-    @Attribute var suitType: suitCategory?
-    @Attribute var waterType: waterCategory?
-    @Attribute var waterBody: waterbodyCategory?
-    @Attribute var waves: wavesCategory?
-    @Attribute var current: currentCategory?
-    @Attribute var surge: surgeCategory?
-    @Attribute var visibility: Float
-    @Attribute var notes: String
-    @Attribute var rating: Int
-    @Attribute var startPressure: Float?
-    @Attribute var endPressure: Float?
-    @Attribute var gasMixture: gasCategory?
-    @Attribute var surfTemp: Float?
-    @Attribute var airTemp: Float?
-    @Attribute var bottomTemp: Float?
+    var id: UUID = UUID()
+    var timestamp: Date = Date()
+    var title: String = ""
+    var location: String = ""
+    var diveType: diveCategory?
+    var startDate: Date = Date()
+    var endDate: Date = Date()
+    var maxDepth: Float = 0 // meters
+    var weight: Float? //kg
+    var weightCategory: Weighting?
+    var tankSize: Float?
+    var tankMaterial: tankCategory?
+    var suitType: suitCategory?
+    var waterType: waterCategory?
+    var waterBody: waterbodyCategory?
+    var waves: wavesCategory?
+    var current: currentCategory?
+    var surge: surgeCategory?
+    var visibility: Float = 0
+    var notes: String = ""
+    var rating: Int = 0
+    var startPressure: Float?
+    var endPressure: Float?
+    var gasMixture: gasCategory?
+    var surfTemp: Float?
+    var airTemp: Float?
+    var bottomTemp: Float?
 
     
     init(timestamp: Date) {

@@ -52,6 +52,7 @@
 		916A92EB2BC3C38D00C5DA50 /* Scuba_LogUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Scuba_LogUITestsLaunchTests.swift; sourceTree = "<group>"; };
 		916A92F82BC3C46700C5DA50 /* NewEntryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewEntryView.swift; sourceTree = "<group>"; };
 		919AD18C2E0C70A400E81098 /* Scuba-Log-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "Scuba-Log-Info.plist"; sourceTree = SOURCE_ROOT; };
+		91BC470A2F3D95D3002F9A32 /* Scuba Log.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "Scuba Log.entitlements"; sourceTree = "<group>"; };
 		91CCDC192E270459004F8756 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		91CE64962BC4C545004E3733 /* TimeInterval+Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TimeInterval+Constants.swift"; sourceTree = "<group>"; };
 		91CE64982BC4DBE0004E3733 /* EntryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntryView.swift; sourceTree = "<group>"; };
@@ -105,6 +106,7 @@
 		916A92CB2BC3C38A00C5DA50 /* Scuba Log */ = {
 			isa = PBXGroup;
 			children = (
+				91BC470A2F3D95D3002F9A32 /* Scuba Log.entitlements */,
 				919AD18C2E0C70A400E81098 /* Scuba-Log-Info.plist */,
 				916A92CC2BC3C38A00C5DA50 /* Scuba_LogApp.swift */,
 				916A92CE2BC3C38A00C5DA50 /* ContentView.swift */,
@@ -442,6 +444,8 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
+				CODE_SIGN_ENTITLEMENTS = "Scuba Log/Scuba Log.entitlements";
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"Scuba Log/Preview Content\"";
@@ -460,6 +464,7 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.peace.Scuba-Log";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -472,6 +477,8 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
+				CODE_SIGN_ENTITLEMENTS = "Scuba Log/Scuba Log.entitlements";
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"Scuba Log/Preview Content\"";
@@ -490,6 +497,7 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.peace.Scuba-Log";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
