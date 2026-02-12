@@ -98,7 +98,7 @@ struct EntryFormView: View {
                     TitleFormView(text: $entry.title, label: "Dive Title*", placeholder: "My dive")
                 }
                 Section {
-                    LocationFormView(text: $entry.location, label: "Dive Site*", placeholder: "La Jolla Shores")
+                    LocationFormView(text: $entry.location, latitude: $entry.latitude, longitude: $entry.longitude, label: "Dive Site*", placeholder: "La Jolla Shores")
                 }
                 Section {
                     DiveTypeFormView(diveType:$entry.diveType, label: "Dive Type")
@@ -207,9 +207,11 @@ class LocationSearchViewModel: NSObject, ObservableObject, MKLocalSearchComplete
 
 struct LocationFormView: View {
     @Binding var text: String
+    @Binding var latitude: Double?
+    @Binding var longitude: Double?
     var label: String
     var placeholder: String
-    
+
     // Location autocomplete and map view
     @StateObject private var viewModel = LocationSearchViewModel()
     @State private var showSuggestions = false
@@ -232,6 +234,8 @@ struct LocationFormView: View {
                         showSuggestions = !text.isEmpty
                         viewModel.updateQuery(text)
                         selectedCoordinate = nil
+                        latitude = nil
+                        longitude = nil
                     }
             }
             // Location suggestions list
@@ -307,6 +311,8 @@ struct LocationFormView: View {
 
             DispatchQueue.main.async {
                 selectedCoordinate = coordinate
+                latitude = coordinate.latitude
+                longitude = coordinate.longitude
             }
         }
     }

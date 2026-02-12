@@ -10,6 +10,8 @@ import MapKit
 
 struct MapPreview: View {
     var locationName: String
+    var storedLatitude: Double?
+    var storedLongitude: Double?
 
     @State private var region = MKCoordinateRegion(
         center: CLLocationCoordinate2D(latitude: 0, longitude: 0),
@@ -37,7 +39,13 @@ struct MapPreview: View {
             }
         }
         .onAppear {
-            geocode()
+            if let lat = storedLatitude, let lon = storedLongitude {
+                let coord = CLLocationCoordinate2D(latitude: lat, longitude: lon)
+                self.coordinate = coord
+                self.region.center = coord
+            } else {
+                geocode()
+            }
         }
     }
 
@@ -101,7 +109,7 @@ struct EntryView: View {
                         EntryRow(label: "Location", value: entry.location)
                         
                         if !entry.location.isEmpty {
-                            MapPreview(locationName: entry.location)
+                            MapPreview(locationName: entry.location, storedLatitude: entry.latitude, storedLongitude: entry.longitude)
                         }
                         
                         EntryRow(label: "Dive Type", value: entry.diveType?.rawValue.capitalized)

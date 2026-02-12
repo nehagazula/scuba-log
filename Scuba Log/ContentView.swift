@@ -7,17 +7,13 @@
 
 import SwiftUI
 import SwiftData
+import MapKit
 
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var entries: [Entry]
     @State private var showingNewEntryView = false
     @State private var showingSettings = false
-    @AppStorage("appAppearance") private var appAppearanceRawValue: String = AppAppearance.system.rawValue
-    
-    private var appAppearance: AppAppearance {
-        AppAppearance(rawValue: appAppearanceRawValue) ?? .system
-    }
     
     var body: some View {
         NavigationView {
@@ -30,7 +26,7 @@ struct ContentView: View {
                 .font(.subheadline)
                 .foregroundColor(.primary)
                 .padding(.horizontal)
-                
+
                 List {
                     ForEach(entries) { entry in
                         ZStack {
@@ -88,9 +84,8 @@ struct ContentView: View {
                 SettingsView()
             }
         }
-        .preferredColorScheme(appAppearance.colorScheme)
     }
-    
+
     private var totalTimeFormatted: String {
         let totalSeconds = entries.reduce(0.0) { $0 + $1.endDate.timeIntervalSince($1.startDate) }
         let hours = Int(totalSeconds) / 3600
@@ -113,7 +108,94 @@ struct ContentView: View {
     }
 }
 
+struct DiveMapView: View {
+    @Query private var entries: [Entry]
+
+    @State private var position: MapCameraPosition = .region(MKCoordinateRegion(
+        center: CLLocationCoordinate2D(latitude: 20, longitude: 0),
+        span: MKCoordinateSpan(latitudeDelta: 140, longitudeDelta: 360)
+    ))
+
+    private var locatedEntries: [Entry] {
+        entries.filter { $0.latitude != nil && $0.longitude != nil }
+    }
+
+    private var mapRegion: MKCoordinateRegion {
+        guard !locatedEntries.isEmpty else {
+            return MKCoordinateRegion(
+                center: CLLocationCoordinate2D(latitude: 20, longitude: 0),
+                span: MKCoordinateSpan(latitudeDelta: 140, longitudeDelta: 360)
+            )
+        }
+
+        let lats = locatedEntries.map { $0.latitude! }
+        let lons = locatedEntries.map { $0.longitude! }
+
+        let minLat = lats.min()!
+        let maxLat = lats.max()!
+        let minLon = lons.min()!
+        let maxLon = lons.max()!
+
+        let center = CLLocationCoordinate2D(
+            latitude: (minLat + maxLat) / 2,
+            longitude: (minLon + maxLon) / 2
+        )
+
+        let latDelta = max((maxLat - minLat) * 1.5, 60)
+        let lonDelta = max((maxLon - minLon) * 1.5, 90)
+
+        return MKCoordinateRegion(
+            center: center,
+            span: MKCoordinateSpan(latitudeDelta: latDelta, longitudeDelta: lonDelta)
+        )
+    }
+
+    var body: some View {
+        NavigationView {
+            Map(position: $position) {
+                ForEach(locatedEntries) { entry in
+                    Marker(
+                        entry.title,
+                        coordinate: CLLocationCoordinate2D(
+                            latitude: entry.latitude!,
+                            longitude: entry.longitude!
+                        )
+                    )
+                }
+            }
+            .navigationTitle("Dive Map")
+            .navigationBarTitleDisplayMode(.inline)
+            .onAppear {
+                position = .region(mapRegion)
+            }
+        }
+    }
+}
+
+struct MainTabView: View {
+    @AppStorage("appAppearance") private var appAppearanceRawValue: String = AppAppearance.system.rawValue
+
+    private var appAppearance: AppAppearance {
+        AppAppearance(rawValue: appAppearanceRawValue) ?? .system
+    }
+
+    var body: some View {
+        TabView {
+            ContentView()
+                .tabItem {
+                    Label("Log", systemImage: "list.bullet")
+                }
+
+            DiveMapView()
+                .tabItem {
+                    Label("Map", systemImage: "map")
+                }
+        }
+        .preferredColorScheme(appAppearance.colorScheme)
+    }
+}
+
 #Preview {
-    ContentView()
+    MainTabView()
         .modelContainer(for: Entry.self, inMemory: true)
 }

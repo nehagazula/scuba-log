@@ -38,6 +38,8 @@ final class Entry {
     var airTemp: Float?
     var bottomTemp: Float?
     var photos: [Data] = []
+    var latitude: Double?
+    var longitude: Double?
 
 
     init(timestamp: Date) {
