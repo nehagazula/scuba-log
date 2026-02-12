@@ -37,8 +37,9 @@ final class Entry {
     var surfTemp: Float?
     var airTemp: Float?
     var bottomTemp: Float?
+    var photos: [Data] = []
 
-    
+
     init(timestamp: Date) {
         self.id = UUID()
         self.timestamp = timestamp

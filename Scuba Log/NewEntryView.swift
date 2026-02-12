@@ -20,7 +20,7 @@ struct NewEntryView: View {
         NavigationView {
             VStack {
                 ButtonView(newEntry: $newEntry, isPresented: $isPresented, addItem: addItem)
-                EntryFormView(entry: $newEntry)
+                EntryFormView(entry: newEntry)
             }
             .navigationTitle("New Dive")
         }
@@ -80,7 +80,7 @@ struct EditEntryView: View {
                 }
                 .padding()
                 
-                EntryFormView(entry: $entryToEdit)
+                EntryFormView(entry: entryToEdit)
             }
             .navigationTitle("Edit Dive")
         }
@@ -88,7 +88,7 @@ struct EditEntryView: View {
 }
 
 struct EntryFormView: View {
-    @Binding var entry: Entry
+    @Bindable var entry: Entry
     
     var body: some View {
         TabView {
@@ -154,7 +154,7 @@ struct EntryFormView: View {
                 }
                 
                 Section {
-                    PhotoUploadFormView()
+                    PhotoUploadFormView(photoData: $entry.photos)
                 }
             }
             
@@ -763,6 +763,7 @@ struct IdentifiableImage: Identifiable, Equatable {
 }
 
 struct PhotoUploadFormView: View {
+    @Binding var photoData: [Data]
     @State private var selectedItems: [PhotosPickerItem] = []
     @State private var selectedImages: [IdentifiableImage] = []
     @State private var isLoading = false
@@ -774,7 +775,7 @@ struct PhotoUploadFormView: View {
             VStack(alignment: .leading, spacing: 12) {
                 Text("Dive Photos")
                 Divider()
-                
+
                 PhotosPicker(
                     selection: $selectedItems,
                     maxSelectionCount: 5,
@@ -788,23 +789,22 @@ struct PhotoUploadFormView: View {
                     isLoading = true
                     Task {
                         var loadedImages = [IdentifiableImage]()
+                        var loadedData = [Data]()
                         for item in selectedItems {
                             if let data = try? await item.loadTransferable(type: Data.self),
-                               let uiImage = UIImage(data: data) {
+                               let uiImage = UIImage(data: data),
+                               let jpegData = uiImage.jpegData(compressionQuality: 0.8) {
                                 loadedImages.append(IdentifiableImage(image: uiImage))
+                                loadedData.append(jpegData)
                             }
                         }
                         await MainActor.run {
                             selectedImages = loadedImages
+                            photoData = loadedData
                             isLoading = false
                         }
                     }
                 }
-
-//                if isLoading {
-//                    ProgressView()
-//                        .padding(.top, 8)
-//                }
 
                 if !selectedImages.isEmpty {
                     ScrollView(.horizontal, showsIndicators: false) {
@@ -833,6 +833,9 @@ struct PhotoUploadFormView: View {
                                             if index < selectedItems.count {
                                                 selectedItems.remove(at: index)
                                             }
+                                            if index < photoData.count {
+                                                photoData.remove(at: index)
+                                            }
                                         }
                                     }) {
                                         Image(systemName: "xmark.circle.fill")
@@ -854,6 +857,12 @@ struct PhotoUploadFormView: View {
             // Only trigger once
             if !sheetDidAppear {
                 sheetDidAppear = true
+            }
+            // Load existing photo data into images for editing
+            if selectedImages.isEmpty && !photoData.isEmpty {
+                selectedImages = photoData.compactMap { data in
+                    UIImage(data: data).map { IdentifiableImage(image: $0) }
+                }
             }
         }
         .fullScreenCover(item: $imageToPreview) { image in

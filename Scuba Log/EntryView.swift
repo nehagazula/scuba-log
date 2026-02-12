@@ -161,8 +161,13 @@ struct EntryView: View {
                 }
                 
                 // Photos
-                // You could render photos here if saved — let me know if you store them.
-                
+                if !entry.photos.isEmpty {
+                    SectionHeader("Photos")
+                    SectionCard {
+                        PhotosDisplayView(photoDataList: entry.photos)
+                    }
+                }
+
             }
             .padding()
         }
@@ -244,5 +249,54 @@ struct SectionHeader: View {
             .font(.title2)
             .bold()
             .padding(.top, 12)
+    }
+}
+
+struct PhotosDisplayView: View {
+    let photoDataList: [Data]
+    @State private var imageToPreview: IdentifiableImage? = nil
+
+    private var images: [IdentifiableImage] {
+        photoDataList.compactMap { data in
+            UIImage(data: data).map { IdentifiableImage(image: $0) }
+        }
+    }
+
+    var body: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                ForEach(images) { identifiableImage in
+                    Image(uiImage: identifiableImage.image)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: 100, height: 100)
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                        .clipped()
+                        .contentShape(RoundedRectangle(cornerRadius: 10))
+                        .onTapGesture {
+                            imageToPreview = identifiableImage
+                        }
+                }
+            }
+        }
+        .fullScreenCover(item: $imageToPreview) { image in
+            ZStack(alignment: .topTrailing) {
+                Color.black.ignoresSafeArea()
+                Image(uiImage: image.image)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(Color.black)
+
+                Button {
+                    imageToPreview = nil
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 30))
+                        .foregroundColor(.white)
+                        .padding()
+                }
+            }
+        }
     }
 }
