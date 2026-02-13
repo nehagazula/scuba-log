@@ -128,21 +128,39 @@ struct DiveMapView: View {
             )
         }
 
-        let lats = locatedEntries.map { $0.latitude! }
-        let lons = locatedEntries.map { $0.longitude! }
+        // Find the pin with the most neighbors within ~200km (2 degrees)
+        let threshold = 2.0
+        var bestIndex = 0
+        var bestCount = 0
 
-        let minLat = lats.min()!
-        let maxLat = lats.max()!
-        let minLon = lons.min()!
-        let maxLon = lons.max()!
+        for i in locatedEntries.indices {
+            let lat = locatedEntries[i].latitude!
+            let lon = locatedEntries[i].longitude!
+            let count = locatedEntries.filter { entry in
+                abs(entry.latitude! - lat) < threshold && abs(entry.longitude! - lon) < threshold
+            }.count
+            if count > bestCount {
+                bestCount = count
+                bestIndex = i
+            }
+        }
 
-        let center = CLLocationCoordinate2D(
-            latitude: (minLat + maxLat) / 2,
-            longitude: (minLon + maxLon) / 2
-        )
+        // Center on the densest cluster's average position
+        let centerLat = locatedEntries[bestIndex].latitude!
+        let centerLon = locatedEntries[bestIndex].longitude!
+        let cluster = locatedEntries.filter { entry in
+            abs(entry.latitude! - centerLat) < threshold && abs(entry.longitude! - centerLon) < threshold
+        }
+        let avgLat = cluster.map { $0.latitude! }.reduce(0, +) / Double(cluster.count)
+        let avgLon = cluster.map { $0.longitude! }.reduce(0, +) / Double(cluster.count)
 
-        let latDelta = max((maxLat - minLat) * 1.5, 60)
-        let lonDelta = max((maxLon - minLon) * 1.5, 90)
+        let center = CLLocationCoordinate2D(latitude: avgLat, longitude: avgLon)
+
+        let clusterLats = cluster.map { $0.latitude! }
+        let clusterLons = cluster.map { $0.longitude! }
+
+        let latDelta = max((clusterLats.max()! - clusterLats.min()!) * 1.5, 60)
+        let lonDelta = max((clusterLons.max()! - clusterLons.min()!) * 1.5, 90)
 
         return MKCoordinateRegion(
             center: center,
