@@ -22,8 +22,9 @@ A native iOS app for logging and tracking scuba dives, built with SwiftUI and Sw
 - Inline photo previews in entry details
 
 **Data Management**
-- CSV export with share sheet (AirDrop, email, Files, etc.)
-- CSV import with duplicate detection and auto-renaming
+- Export dive log as CSV or UDDF (Universal Dive Data Format) via share sheet (AirDrop, email, Files, etc.)
+- Import dive log from CSV or UDDF files with duplicate detection and auto-renaming
+- UDDF support enables interoperability with other dive log software (Subsurface, MacDive, etc.) and dive computers
 - iCloud backup and sync via CloudKit
 - Metric and imperial unit support
 
@@ -53,7 +54,7 @@ Scuba Log/
 ├── Entry.swift                 # Data model and enums
 ├── NewEntryView.swift          # Multi-tab form for creating/editing dives
 ├── EntryView.swift             # Dive detail view
-├── SettingsView.swift          # Settings, CSV export/import
+├── SettingsView.swift          # Settings, CSV/UDDF export/import
 └── TimeInterval+Constants.swift
 ```
 
