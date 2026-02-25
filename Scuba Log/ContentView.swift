@@ -7,45 +7,92 @@
 
 import SwiftUI
 import SwiftData
+import MapKit
 
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var entries: [Entry]
     @State private var showingNewEntryView = false
+    @State private var showingSettings = false
     
     var body: some View {
         NavigationView {
-            List {
-                ForEach(entries) { entry in
-                    NavigationLink {
-                        EntryView(entry: entry)
-                    } label: {
-                        Text("\(entry.title) \(entry.startDate, format: Date.FormatStyle(date: .numeric, time: .standard))")
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Text("Total dives: \(entries.count)")
+                    Spacer()
+                    Text("Dive time: \(totalTimeFormatted)")
+                }
+                .font(.subheadline)
+                .foregroundColor(.primary)
+                .padding(.horizontal)
+
+                List {
+                    ForEach(entries) { entry in
+                        ZStack {
+                            NavigationLink(destination: EntryView(entry: entry)) {
+                                EmptyView()
+                            }
+                            .opacity(0)
+
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("\(entry.title)").bold()
+                                Text("\(entry.startDate, format: Date.FormatStyle(date: .abbreviated)), \(entry.location)").font(.footnote)
+                                    .foregroundColor(.secondary)
+                            }
+                            .padding()
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(Color(.systemGray6))
+                            .cornerRadius(12)
+                        }
+                    }
+                    .onDelete(perform: deleteItems)
+                    .listRowSeparator(.hidden)
+                    .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
+                }
+                .listStyle(.plain)
+                .toolbar {
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        EditButton()
+                    }
+                    ToolbarItem {
+                        Button(action: {
+                            showingNewEntryView = true
+                        }) {
+                            Label("Add Item", systemImage: "plus")
+                        }
+                        .padding()
+                    }
+                    ToolbarItem(placement: .navigationBarLeading) {
+                        Button {
+                            showingSettings = true
+                        } label: {
+                            Image(systemName: "gear")
+                        }
                     }
                 }
-                .onDelete(perform: deleteItems)
+                .navigationTitle("Scuba Log")
+                .navigationBarTitleDisplayMode(.large)
             }
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    EditButton()
-                }
-                ToolbarItem {
-                    Button(action: {
-                        showingNewEntryView = true
-                    }) {
-                        Label("Add Item", systemImage: "plus")
-                    }
-                    .padding()
-                }
-            }
-            .navigationBarTitle("Scuba Log", displayMode: .large)
         }
         .sheet(isPresented: $showingNewEntryView) {
             NewEntryView(isPresented: $showingNewEntryView, addItem: addItem)
                 .interactiveDismissDisabled()
         }
+        .sheet(isPresented: $showingSettings) {
+            NavigationView{
+                SettingsView()
+            }
+        }
     }
-    
+
+    private var totalTimeFormatted: String {
+        let totalSeconds = entries.reduce(0.0) { $0 + $1.endDate.timeIntervalSince($1.startDate) }
+        let hours = Int(totalSeconds) / 3600
+        let minutes = (Int(totalSeconds) % 3600) / 60
+        return "\(hours)h \(minutes)m"
+    }
+
     private func addItem(_ newItem: Entry) {
         withAnimation {
             modelContext.insert(newItem)
@@ -61,7 +108,112 @@ struct ContentView: View {
     }
 }
 
+struct DiveMapView: View {
+    @Query private var entries: [Entry]
+
+    @State private var position: MapCameraPosition = .region(MKCoordinateRegion(
+        center: CLLocationCoordinate2D(latitude: 20, longitude: 0),
+        span: MKCoordinateSpan(latitudeDelta: 140, longitudeDelta: 360)
+    ))
+
+    private var locatedEntries: [Entry] {
+        entries.filter { $0.latitude != nil && $0.longitude != nil }
+    }
+
+    private var mapRegion: MKCoordinateRegion {
+        guard !locatedEntries.isEmpty else {
+            return MKCoordinateRegion(
+                center: CLLocationCoordinate2D(latitude: 20, longitude: 0),
+                span: MKCoordinateSpan(latitudeDelta: 140, longitudeDelta: 360)
+            )
+        }
+
+        // Find the pin with the most neighbors within ~200km (2 degrees)
+        let threshold = 2.0
+        var bestIndex = 0
+        var bestCount = 0
+
+        for i in locatedEntries.indices {
+            let lat = locatedEntries[i].latitude!
+            let lon = locatedEntries[i].longitude!
+            let count = locatedEntries.filter { entry in
+                abs(entry.latitude! - lat) < threshold && abs(entry.longitude! - lon) < threshold
+            }.count
+            if count > bestCount {
+                bestCount = count
+                bestIndex = i
+            }
+        }
+
+        // Center on the densest cluster's average position
+        let centerLat = locatedEntries[bestIndex].latitude!
+        let centerLon = locatedEntries[bestIndex].longitude!
+        let cluster = locatedEntries.filter { entry in
+            abs(entry.latitude! - centerLat) < threshold && abs(entry.longitude! - centerLon) < threshold
+        }
+        let avgLat = cluster.map { $0.latitude! }.reduce(0, +) / Double(cluster.count)
+        let avgLon = cluster.map { $0.longitude! }.reduce(0, +) / Double(cluster.count)
+
+        let center = CLLocationCoordinate2D(latitude: avgLat, longitude: avgLon)
+
+        let clusterLats = cluster.map { $0.latitude! }
+        let clusterLons = cluster.map { $0.longitude! }
+
+        let latDelta = max((clusterLats.max()! - clusterLats.min()!) * 1.5, 60)
+        let lonDelta = max((clusterLons.max()! - clusterLons.min()!) * 1.5, 90)
+
+        return MKCoordinateRegion(
+            center: center,
+            span: MKCoordinateSpan(latitudeDelta: latDelta, longitudeDelta: lonDelta)
+        )
+    }
+
+    var body: some View {
+        NavigationView {
+            Map(position: $position) {
+                ForEach(locatedEntries) { entry in
+                    Marker(
+                        entry.title,
+                        coordinate: CLLocationCoordinate2D(
+                            latitude: entry.latitude!,
+                            longitude: entry.longitude!
+                        )
+                    )
+                }
+            }
+            .navigationTitle("Dive Map")
+            .navigationBarTitleDisplayMode(.inline)
+            .onAppear {
+                position = .region(mapRegion)
+            }
+        }
+    }
+}
+
+struct MainTabView: View {
+    @AppStorage("appAppearance") private var appAppearanceRawValue: String = AppAppearance.system.rawValue
+
+    private var appAppearance: AppAppearance {
+        AppAppearance(rawValue: appAppearanceRawValue) ?? .system
+    }
+
+    var body: some View {
+        TabView {
+            ContentView()
+                .tabItem {
+                    Label("Log", systemImage: "list.bullet")
+                }
+
+            DiveMapView()
+                .tabItem {
+                    Label("Map", systemImage: "map")
+                }
+        }
+        .preferredColorScheme(appAppearance.colorScheme)
+    }
+}
+
 #Preview {
-    ContentView()
+    MainTabView()
         .modelContainer(for: Entry.self, inMemory: true)
 }

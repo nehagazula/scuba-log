@@ -16,6 +16,7 @@
 		916A92EA2BC3C38D00C5DA50 /* Scuba_LogUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 916A92E92BC3C38D00C5DA50 /* Scuba_LogUITests.swift */; };
 		916A92EC2BC3C38D00C5DA50 /* Scuba_LogUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 916A92EB2BC3C38D00C5DA50 /* Scuba_LogUITestsLaunchTests.swift */; };
 		916A92F92BC3C46700C5DA50 /* NewEntryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 916A92F82BC3C46700C5DA50 /* NewEntryView.swift */; };
+		91CCDC1A2E270460004F8756 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91CCDC192E270459004F8756 /* SettingsView.swift */; };
 		91CE64972BC4C545004E3733 /* TimeInterval+Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91CE64962BC4C545004E3733 /* TimeInterval+Constants.swift */; };
 		91CE64992BC4DBE0004E3733 /* EntryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91CE64982BC4DBE0004E3733 /* EntryView.swift */; };
 /* End PBXBuildFile section */
@@ -50,6 +51,9 @@
 		916A92E92BC3C38D00C5DA50 /* Scuba_LogUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Scuba_LogUITests.swift; sourceTree = "<group>"; };
 		916A92EB2BC3C38D00C5DA50 /* Scuba_LogUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Scuba_LogUITestsLaunchTests.swift; sourceTree = "<group>"; };
 		916A92F82BC3C46700C5DA50 /* NewEntryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewEntryView.swift; sourceTree = "<group>"; };
+		919AD18C2E0C70A400E81098 /* Scuba-Log-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "Scuba-Log-Info.plist"; sourceTree = SOURCE_ROOT; };
+		91BC470A2F3D95D3002F9A32 /* Scuba Log.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "Scuba Log.entitlements"; sourceTree = "<group>"; };
+		91CCDC192E270459004F8756 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		91CE64962BC4C545004E3733 /* TimeInterval+Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TimeInterval+Constants.swift"; sourceTree = "<group>"; };
 		91CE64982BC4DBE0004E3733 /* EntryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntryView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -102,8 +106,11 @@
 		916A92CB2BC3C38A00C5DA50 /* Scuba Log */ = {
 			isa = PBXGroup;
 			children = (
+				91BC470A2F3D95D3002F9A32 /* Scuba Log.entitlements */,
+				919AD18C2E0C70A400E81098 /* Scuba-Log-Info.plist */,
 				916A92CC2BC3C38A00C5DA50 /* Scuba_LogApp.swift */,
 				916A92CE2BC3C38A00C5DA50 /* ContentView.swift */,
+				91CCDC192E270459004F8756 /* SettingsView.swift */,
 				916A92D02BC3C38A00C5DA50 /* Entry.swift */,
 				91CE64982BC4DBE0004E3733 /* EntryView.swift */,
 				916A92F82BC3C46700C5DA50 /* NewEntryView.swift */,
@@ -269,6 +276,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				91CCDC1A2E270460004F8756 /* SettingsView.swift in Sources */,
 				916A92F92BC3C46700C5DA50 /* NewEntryView.swift in Sources */,
 				916A92CF2BC3C38A00C5DA50 /* ContentView.swift in Sources */,
 				916A92D12BC3C38A00C5DA50 /* Entry.swift in Sources */,
@@ -435,14 +443,18 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
+				CODE_SIGN_ENTITLEMENTS = "Scuba Log/Scuba Log.entitlements";
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"Scuba Log/Preview Content\"";
+				DEVELOPMENT_TEAM = G3KL5GPZZ5;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Scuba-Log-Info.plist";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -452,6 +464,7 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.peace.Scuba-Log";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -463,14 +476,18 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
+				CODE_SIGN_ENTITLEMENTS = "Scuba Log/Scuba Log.entitlements";
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"Scuba Log/Preview Content\"";
+				DEVELOPMENT_TEAM = G3KL5GPZZ5;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Scuba-Log-Info.plist";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -480,6 +497,7 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.peace.Scuba-Log";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
