@@ -19,9 +19,9 @@ struct ContentView: View {
         NavigationView {
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
-                    Text("Total dives: \(entries.count)")
+                    Text("Total Dives: \(entries.count)")
                     Spacer()
-                    Text("Dive time: \(totalTimeFormatted)")
+                    Text("Dive Time: \(totalTimeFormatted)")
                 }
                 .font(.subheadline)
                 .foregroundColor(.primary)
