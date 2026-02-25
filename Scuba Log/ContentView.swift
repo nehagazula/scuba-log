@@ -120,6 +120,19 @@ struct DiveMapView: View {
         entries.filter { $0.latitude != nil && $0.longitude != nil }
     }
 
+    private var uniqueSites: [(name: String, latitude: Double, longitude: Double)] {
+        var seen = Set<String>()
+        var sites: [(name: String, latitude: Double, longitude: Double)] = []
+        for entry in locatedEntries {
+            let key = entry.location.trimmingCharacters(in: .whitespaces)
+            if !key.isEmpty && !seen.contains(key) {
+                seen.insert(key)
+                sites.append((name: entry.location, latitude: entry.latitude!, longitude: entry.longitude!))
+            }
+        }
+        return sites
+    }
+
     private var mapRegion: MKCoordinateRegion {
         guard !locatedEntries.isEmpty else {
             return MKCoordinateRegion(
@@ -171,12 +184,12 @@ struct DiveMapView: View {
     var body: some View {
         NavigationView {
             Map(position: $position) {
-                ForEach(locatedEntries) { entry in
+                ForEach(uniqueSites, id: \.name) { site in
                     Marker(
-                        entry.title,
+                        site.name,
                         coordinate: CLLocationCoordinate2D(
-                            latitude: entry.latitude!,
-                            longitude: entry.longitude!
+                            latitude: site.latitude,
+                            longitude: site.longitude
                         )
                     )
                 }
