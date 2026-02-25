@@ -69,6 +69,8 @@ struct SettingsView: View {
     @State private var importErrorMessage = ""
     @State private var duplicateTitles: [String] = []
     @State private var pendingCSVString: String?
+    @State private var pendingUDDFData: Data?
+    @State private var showingExportFormatPicker = false
 
     private var appAppearance: AppAppearance {
         get { AppAppearance(rawValue: appAppearanceRawValue) ?? .system }
@@ -95,11 +97,16 @@ struct SettingsView: View {
 
             Section(header: Text("Data")) {
                 Button {
-                    exportCSV()
+                    showingExportFormatPicker = true
                 } label: {
                     Label("Export Dive Log", systemImage: "square.and.arrow.up")
                 }
                 .disabled(entries.isEmpty)
+                .confirmationDialog("Export Format", isPresented: $showingExportFormatPicker) {
+                    Button("CSV") { exportCSV() }
+                    Button("UDDF") { exportUDDF() }
+                    Button("Cancel", role: .cancel) {}
+                }
 
                 Button {
                     showingFileImporter = true
@@ -123,7 +130,7 @@ struct SettingsView: View {
         }
         .fileImporter(
             isPresented: $showingFileImporter,
-            allowedContentTypes: [.commaSeparatedText, .plainText],
+            allowedContentTypes: [.commaSeparatedText, .plainText, .xml, .data],
             allowsMultipleSelection: false
         ) { result in
             handleFileImport(result)
@@ -140,19 +147,31 @@ struct SettingsView: View {
         }
         .alert("Duplicate Entries Found", isPresented: $showingDuplicateWarning) {
             Button("Import with Renamed Titles") {
-                guard let csvString = pendingCSVString else { return }
-                do {
-                    let count = try importCSV(csvString)
-                    importedCount = count
-                    showingImportSuccessAlert = true
-                } catch {
-                    importErrorMessage = error.localizedDescription
-                    showingImportErrorAlert = true
+                if let csvString = pendingCSVString {
+                    do {
+                        let count = try importCSV(csvString)
+                        importedCount = count
+                        showingImportSuccessAlert = true
+                    } catch {
+                        importErrorMessage = error.localizedDescription
+                        showingImportErrorAlert = true
+                    }
+                    pendingCSVString = nil
+                } else if let uddfData = pendingUDDFData {
+                    do {
+                        let count = try importUDDF(uddfData)
+                        importedCount = count
+                        showingImportSuccessAlert = true
+                    } catch {
+                        importErrorMessage = error.localizedDescription
+                        showingImportErrorAlert = true
+                    }
+                    pendingUDDFData = nil
                 }
-                pendingCSVString = nil
             }
             Button("Cancel", role: .cancel) {
                 pendingCSVString = nil
+                pendingUDDFData = nil
             }
         } message: {
             let names = duplicateTitles.prefix(5).joined(separator: ", ")
@@ -264,6 +283,170 @@ struct SettingsView: View {
         return String(format: "%.1f", value)
     }
 
+    // MARK: - UDDF Export
+
+    private func exportUDDF() {
+        let isoFormatter = ISO8601DateFormatter()
+        isoFormatter.formatOptions = [.withInternetDateTime]
+
+        let now = isoFormatter.string(from: Date())
+
+        // Collect unique locations
+        var siteMap: [String: Int] = [:]  // location name → site index
+        var siteEntries: [(name: String, lat: Double?, lon: Double?)] = []
+        for entry in entries {
+            let loc = entry.location.trimmingCharacters(in: .whitespaces)
+            if !loc.isEmpty && siteMap[loc] == nil {
+                siteMap[loc] = siteEntries.count
+                siteEntries.append((name: loc, lat: entry.latitude, lon: entry.longitude))
+            }
+        }
+
+        // Collect unique gas mixtures
+        var mixMap: [gasCategory: Int] = [:]
+        var mixEntries: [(gas: gasCategory, o2: Double, he: Double)] = []
+        for entry in entries {
+            if let gas = entry.gasMixture, mixMap[gas] == nil {
+                let fractions = gasCategoryToFractions(gas)
+                mixMap[gas] = mixEntries.count
+                mixEntries.append((gas: gas, o2: fractions.o2, he: fractions.he))
+            }
+        }
+
+        // Build XML
+        var xml = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n"
+        xml += "<uddf version=\"3.2.0\">\n"
+
+        // Generator
+        xml += "  <generator>\n"
+        xml += "    <name>Scuba Log</name>\n"
+        xml += "    <manufacturer id=\"scubalog\">\n"
+        xml += "      <name>Scuba Log</name>\n"
+        xml += "    </manufacturer>\n"
+        xml += "    <datetime>\(now)</datetime>\n"
+        xml += "  </generator>\n"
+
+        // Gas definitions
+        xml += "  <gasdefinitions>\n"
+        for (index, mix) in mixEntries.enumerated() {
+            let n2 = max(0, 1.0 - mix.o2 - mix.he)
+            xml += "    <mix id=\"mix_\(index)\">\n"
+            xml += "      <o2>\(mix.o2)</o2>\n"
+            xml += "      <n2>\(String(format: "%.4f", n2))</n2>\n"
+            xml += "      <he>\(mix.he)</he>\n"
+            xml += "    </mix>\n"
+        }
+        xml += "  </gasdefinitions>\n"
+
+        // Dive sites
+        xml += "  <divesite>\n"
+        for (index, site) in siteEntries.enumerated() {
+            xml += "    <site id=\"site_\(index)\">\n"
+            xml += "      <name>\(xmlEscape(site.name))</name>\n"
+            if let lat = site.lat, let lon = site.lon {
+                xml += "      <geography>\n"
+                xml += "        <latitude>\(lat)</latitude>\n"
+                xml += "        <longitude>\(lon)</longitude>\n"
+                xml += "      </geography>\n"
+            }
+            xml += "    </site>\n"
+        }
+        xml += "  </divesite>\n"
+
+        // Profile data
+        xml += "  <profiledata>\n"
+        xml += "    <repetitiongroup>\n"
+
+        for entry in entries {
+            xml += "      <dive>\n"
+
+            // Information before dive
+            xml += "        <informationbeforedive>\n"
+            xml += "          <datetime>\(isoFormatter.string(from: entry.startDate))</datetime>\n"
+            if let airTemp = entry.airTemp {
+                xml += "          <airtemperature>\(String(format: "%.2f", Double(airTemp) + 273.15))</airtemperature>\n"
+            }
+            let loc = entry.location.trimmingCharacters(in: .whitespaces)
+            if !loc.isEmpty, let siteIndex = siteMap[loc] {
+                xml += "          <link ref=\"site_\(siteIndex)\"/>\n"
+            }
+            xml += "        </informationbeforedive>\n"
+
+            // Tank data
+            if entry.gasMixture != nil || entry.tankSize != nil || entry.startPressure != nil || entry.endPressure != nil {
+                xml += "        <tankdata>\n"
+                if let gas = entry.gasMixture, let mixIndex = mixMap[gas] {
+                    xml += "          <link ref=\"mix_\(mixIndex)\"/>\n"
+                }
+                if let tankSize = entry.tankSize {
+                    xml += "          <tankvolume>\(String(format: "%.1f", tankSize))</tankvolume>\n"
+                }
+                if let startP = entry.startPressure {
+                    xml += "          <tankpressurebegin>\(String(format: "%.0f", Double(startP) * 100000.0))</tankpressurebegin>\n"
+                }
+                if let endP = entry.endPressure {
+                    xml += "          <tankpressureend>\(String(format: "%.0f", Double(endP) * 100000.0))</tankpressureend>\n"
+                }
+                xml += "        </tankdata>\n"
+            }
+
+            // Information after dive
+            xml += "        <informationafterdive>\n"
+            if entry.maxDepth > 0 {
+                xml += "          <greatestdepth>\(String(format: "%.1f", entry.maxDepth))</greatestdepth>\n"
+            }
+            let duration = entry.endDate.timeIntervalSince(entry.startDate)
+            if duration > 0 {
+                xml += "          <diveduration>\(String(format: "%.0f", duration))</diveduration>\n"
+            }
+            if let bottomTemp = entry.bottomTemp {
+                xml += "          <lowesttemperature>\(String(format: "%.2f", Double(bottomTemp) + 273.15))</lowesttemperature>\n"
+            }
+            xml += "        </informationafterdive>\n"
+
+            xml += "      </dive>\n"
+        }
+
+        xml += "    </repetitiongroup>\n"
+        xml += "  </profiledata>\n"
+        xml += "</uddf>\n"
+
+        // Write to temp file
+        let dateStamp = DateFormatter()
+        dateStamp.dateFormat = "yyyy-MM-dd"
+        let filename = "ScubaLog_Export_\(dateStamp.string(from: Date())).uddf"
+        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(filename)
+
+        do {
+            try xml.write(to: tempURL, atomically: true, encoding: .utf8)
+            csvFileURL = tempURL
+            showingShareSheet = true
+        } catch {
+            print("Failed to write UDDF: \(error)")
+        }
+    }
+
+    private func gasCategoryToFractions(_ gas: gasCategory) -> (o2: Double, he: Double) {
+        switch gas {
+        case .air:        return (0.21, 0.0)
+        case .eanx32:     return (0.32, 0.0)
+        case .eanx36:     return (0.36, 0.0)
+        case .eanx40:     return (0.40, 0.0)
+        case .enriched:   return (0.32, 0.0)
+        case .trimix:     return (0.21, 0.35)
+        case .rebreather: return (0.21, 0.0)
+        }
+    }
+
+    private func xmlEscape(_ string: String) -> String {
+        string
+            .replacingOccurrences(of: "&", with: "&amp;")
+            .replacingOccurrences(of: "<", with: "&lt;")
+            .replacingOccurrences(of: ">", with: "&gt;")
+            .replacingOccurrences(of: "\"", with: "&quot;")
+            .replacingOccurrences(of: "'", with: "&apos;")
+    }
+
     // MARK: - CSV Import
 
     private func handleFileImport(_ result: Result<[URL], Error>) {
@@ -278,18 +461,35 @@ struct SettingsView: View {
             }
             defer { url.stopAccessingSecurityScopedResource() }
 
-            do {
-                let csvString = try String(contentsOf: url, encoding: .utf8)
-                let dupes = try findDuplicateTitles(in: csvString)
+            let ext = url.pathExtension.lowercased()
 
-                if dupes.isEmpty {
-                    let count = try importCSV(csvString)
-                    importedCount = count
-                    showingImportSuccessAlert = true
+            do {
+                if ext == "uddf" || ext == "xml" {
+                    let data = try Data(contentsOf: url)
+                    let dupes = try findUDDFDuplicateTitles(in: data)
+
+                    if dupes.isEmpty {
+                        let count = try importUDDF(data)
+                        importedCount = count
+                        showingImportSuccessAlert = true
+                    } else {
+                        duplicateTitles = dupes
+                        pendingUDDFData = data
+                        showingDuplicateWarning = true
+                    }
                 } else {
-                    duplicateTitles = dupes
-                    pendingCSVString = csvString
-                    showingDuplicateWarning = true
+                    let csvString = try String(contentsOf: url, encoding: .utf8)
+                    let dupes = try findDuplicateTitles(in: csvString)
+
+                    if dupes.isEmpty {
+                        let count = try importCSV(csvString)
+                        importedCount = count
+                        showingImportSuccessAlert = true
+                    } else {
+                        duplicateTitles = dupes
+                        pendingCSVString = csvString
+                        showingDuplicateWarning = true
+                    }
                 }
             } catch let error as CSVImportError {
                 importErrorMessage = error.localizedDescription ?? "Unknown import error."
@@ -552,6 +752,322 @@ struct SettingsView: View {
         let trimmed = string.trimmingCharacters(in: .whitespaces)
         guard !trimmed.isEmpty else { return nil }
         return Float(trimmed)
+    }
+
+    // MARK: - UDDF Import
+
+    private func findUDDFDuplicateTitles(in data: Data) throws -> [String] {
+        let parser = UDDFParser()
+        try parser.parse(data)
+
+        let existingTitles = Set(entries.map { $0.title })
+        var duplicates: [String] = []
+
+        for (index, dive) in parser.dives.enumerated() {
+            let title = uddfTitleForDive(dive, index: index, sites: parser.sites)
+            if existingTitles.contains(title) {
+                duplicates.append(title)
+            }
+        }
+
+        return duplicates
+    }
+
+    private func importUDDF(_ data: Data) throws -> Int {
+        let parser = UDDFParser()
+        try parser.parse(data)
+
+        var existingTitles = Set(entries.map { $0.title })
+        var count = 0
+
+        for (index, dive) in parser.dives.enumerated() {
+            let entry = Entry(timestamp: Date())
+
+            // Title with deduplication
+            let baseTitle = uddfTitleForDive(dive, index: index, sites: parser.sites)
+            if existingTitles.contains(baseTitle) {
+                var counter = 2
+                while existingTitles.contains("\(baseTitle) \(counter)") {
+                    counter += 1
+                }
+                entry.title = "\(baseTitle) \(counter)"
+            } else {
+                entry.title = baseTitle
+            }
+            existingTitles.insert(entry.title)
+
+            // Location from site reference
+            if let siteRef = dive.siteRef, let site = parser.sites[siteRef] {
+                entry.location = site.name
+                entry.latitude = site.latitude
+                entry.longitude = site.longitude
+            }
+
+            // Date and time
+            if let datetime = dive.datetime {
+                entry.startDate = parseUDDFDate(datetime) ?? Date()
+            }
+
+            // Duration → endDate
+            if let duration = dive.diveDurationSeconds {
+                entry.endDate = entry.startDate.addingTimeInterval(duration)
+            } else {
+                entry.endDate = entry.startDate
+            }
+
+            // Depth (already in meters)
+            if let depth = dive.greatestDepthMeters {
+                entry.maxDepth = Float(depth)
+            }
+
+            // Temperatures (Kelvin → °C)
+            if let airTemp = dive.airTemperatureKelvin {
+                entry.airTemp = Float(airTemp - 273.15)
+            }
+            if let bottomTemp = dive.lowestTemperatureKelvin {
+                entry.bottomTemp = Float(bottomTemp - 273.15)
+            }
+
+            // Gas mixture
+            if let mixRef = dive.gasMixRef, let mix = parser.gasMixes[mixRef] {
+                entry.gasMixture = mapGasCategory(o2: mix.o2, he: mix.he)
+            }
+
+            // Tank data (Pascals → Bar, volume in liters)
+            if let volume = dive.tankVolumeLiters {
+                entry.tankSize = Float(volume)
+            }
+            if let startP = dive.startPressurePascals {
+                entry.startPressure = Float(startP / 100000.0)
+            }
+            if let endP = dive.endPressurePascals {
+                entry.endPressure = Float(endP / 100000.0)
+            }
+
+            modelContext.insert(entry)
+            count += 1
+        }
+
+        return count
+    }
+
+    private func uddfTitleForDive(_ dive: UDDFParser.Dive, index: Int, sites: [String: UDDFParser.Site]) -> String {
+        if let siteRef = dive.siteRef, let site = sites[siteRef], !site.name.isEmpty {
+            return site.name
+        }
+        if let number = dive.diveNumber {
+            return "Dive \(number)"
+        }
+        return "UDDF Dive \(index + 1)"
+    }
+
+    private func mapGasCategory(o2: Double, he: Double) -> gasCategory {
+        if he > 0.01 { return .trimix }
+        if abs(o2 - 0.21) < 0.02 { return .air }
+        if abs(o2 - 0.32) < 0.02 { return .eanx32 }
+        if abs(o2 - 0.36) < 0.02 { return .eanx36 }
+        if abs(o2 - 0.40) < 0.02 { return .eanx40 }
+        if o2 > 0.21 { return .enriched }
+        return .air
+    }
+
+    private func parseUDDFDate(_ string: String) -> Date? {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        if let date = formatter.date(from: string) { return date }
+        formatter.formatOptions = [.withInternetDateTime]
+        if let date = formatter.date(from: string) { return date }
+        let df = DateFormatter()
+        df.locale = Locale(identifier: "en_US_POSIX")
+        df.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
+        return df.date(from: string)
+    }
+}
+
+// MARK: - UDDF Parser
+
+private class UDDFParser: NSObject, XMLParserDelegate {
+    struct Site {
+        var name: String = ""
+        var latitude: Double?
+        var longitude: Double?
+    }
+
+    struct Dive {
+        var datetime: String?
+        var diveNumber: Int?
+        var siteRef: String?
+        var airTemperatureKelvin: Double?
+        var greatestDepthMeters: Double?
+        var diveDurationSeconds: Double?
+        var lowestTemperatureKelvin: Double?
+        var gasMixRef: String?
+        var tankVolumeLiters: Double?
+        var startPressurePascals: Double?
+        var endPressurePascals: Double?
+    }
+
+    private(set) var sites: [String: Site] = [:]
+    private(set) var gasMixes: [String: (o2: Double, he: Double)] = [:]
+    private(set) var dives: [Dive] = []
+
+    private var elementStack: [String] = []
+    private var currentText = ""
+
+    private var currentSiteId: String?
+    private var currentSite: Site?
+    private var currentMixId: String?
+    private var currentMixO2: Double = 0.21
+    private var currentMixHe: Double = 0.0
+    private var currentDive: Dive?
+
+    func parse(_ data: Data) throws {
+        let parser = XMLParser(data: data)
+        parser.delegate = self
+        parser.shouldProcessNamespaces = false
+        guard parser.parse() else {
+            if let error = parser.parserError {
+                throw error
+            }
+            throw NSError(domain: "UDDFParser", code: -1,
+                          userInfo: [NSLocalizedDescriptionKey: "Failed to parse UDDF file."])
+        }
+    }
+
+    // MARK: XMLParserDelegate
+
+    func parser(_ parser: XMLParser, didStartElement elementName: String,
+                namespaceURI: String?, qualifiedName: String?,
+                attributes attributeDict: [String: String] = [:]) {
+        elementStack.append(elementName)
+        currentText = ""
+
+        switch elementName {
+        case "site":
+            if let id = attributeDict["id"] {
+                currentSiteId = id
+                currentSite = Site()
+            }
+        case "mix":
+            if let id = attributeDict["id"] {
+                currentMixId = id
+                currentMixO2 = 0.21
+                currentMixHe = 0.0
+            }
+        case "dive":
+            currentDive = Dive()
+        case "link":
+            if let ref = attributeDict["ref"] {
+                if isInContext("informationbeforedive") {
+                    currentDive?.siteRef = ref
+                } else if isInContext("tankdata") {
+                    currentDive?.gasMixRef = ref
+                }
+            }
+        default:
+            break
+        }
+    }
+
+    func parser(_ parser: XMLParser, foundCharacters string: String) {
+        currentText += string
+    }
+
+    func parser(_ parser: XMLParser, didEndElement elementName: String,
+                namespaceURI: String?, qualifiedName: String?) {
+        let text = currentText.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        switch elementName {
+        // Site elements
+        case "name":
+            if currentSite != nil {
+                currentSite?.name = text
+            }
+        case "latitude":
+            if currentSite != nil, let val = Double(text) {
+                currentSite?.latitude = val
+            }
+        case "longitude":
+            if currentSite != nil, let val = Double(text) {
+                currentSite?.longitude = val
+            }
+        case "site":
+            if let id = currentSiteId, let site = currentSite {
+                sites[id] = site
+            }
+            currentSiteId = nil
+            currentSite = nil
+
+        // Gas mix elements
+        case "o2":
+            if currentMixId != nil, let val = Double(text) {
+                currentMixO2 = val
+            }
+        case "he":
+            if currentMixId != nil, let val = Double(text) {
+                currentMixHe = val
+            }
+        case "mix":
+            if let id = currentMixId {
+                gasMixes[id] = (o2: currentMixO2, he: currentMixHe)
+            }
+            currentMixId = nil
+
+        // Dive elements
+        case "datetime":
+            if currentDive != nil {
+                currentDive?.datetime = text
+            }
+        case "divenumber":
+            if currentDive != nil, let val = Int(text) {
+                currentDive?.diveNumber = val
+            }
+        case "airtemperature":
+            if currentDive != nil, let val = Double(text) {
+                currentDive?.airTemperatureKelvin = val
+            }
+        case "greatestdepth":
+            if currentDive != nil, let val = Double(text) {
+                currentDive?.greatestDepthMeters = val
+            }
+        case "diveduration":
+            if currentDive != nil, let val = Double(text) {
+                currentDive?.diveDurationSeconds = val
+            }
+        case "lowesttemperature":
+            if currentDive != nil, let val = Double(text) {
+                currentDive?.lowestTemperatureKelvin = val
+            }
+        case "tankvolume":
+            if currentDive != nil, let val = Double(text) {
+                currentDive?.tankVolumeLiters = val
+            }
+        case "tankpressurebegin":
+            if currentDive != nil, let val = Double(text) {
+                currentDive?.startPressurePascals = val
+            }
+        case "tankpressureend":
+            if currentDive != nil, let val = Double(text) {
+                currentDive?.endPressurePascals = val
+            }
+        case "dive":
+            if let dive = currentDive {
+                dives.append(dive)
+            }
+            currentDive = nil
+
+        default:
+            break
+        }
+
+        if !elementStack.isEmpty {
+            elementStack.removeLast()
+        }
+    }
+
+    private func isInContext(_ element: String) -> Bool {
+        guard elementStack.count >= 2 else { return false }
+        return elementStack.dropLast().contains(element)
     }
 }
 
