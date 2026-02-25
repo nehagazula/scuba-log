@@ -170,9 +170,11 @@ struct SettingsView: View {
         let pressureUnit = isMetric ? "Bar" : "PSI"
         let tankUnit = isMetric ? "L" : "cu ft"
 
+        let visUnit = isMetric ? "m" : "ft"
         let headers = [
-            "Title", "Location", "Dive Type", "Start Date", "End Date",
-            "Max Depth (\(depthUnit))", "Visibility (m)", "Rating",
+            "Title", "Location", "Dive Type", "Date", "Bottom Time (min)",
+            "Start Time", "End Time",
+            "Max Depth (\(depthUnit))", "Visibility (\(visUnit))", "Visibility Rating", "Rating",
             "Weight (\(weightUnit))", "Weighting",
             "Tank Size (\(tankUnit))", "Tank Material", "Gas Mixture",
             "Start Pressure (\(pressureUnit))", "End Pressure (\(pressureUnit))",
@@ -183,21 +185,34 @@ struct SettingsView: View {
         ]
 
         let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyy-MM-dd HH:mm"
+        dateFormatter.dateFormat = "yyyy-MM-dd"
+
+        let timeFormatter = DateFormatter()
+        timeFormatter.dateFormat = "HH:mm"
 
         var csv = headers.joined(separator: ",") + "\n"
 
         for entry in entries {
             let depth = isMetric ? entry.maxDepth : entry.maxDepth * 3.28084
+            let bottomTime = Int(entry.endDate.timeIntervalSince(entry.startDate) / 60)
+
+            let calendar = Calendar.current
+            let startComps = calendar.dateComponents([.hour, .minute], from: entry.startDate)
+            let hasStartTime = (startComps.hour ?? 0) != 0 || (startComps.minute ?? 0) != 0
+            let endComps = calendar.dateComponents([.hour, .minute], from: entry.endDate)
+            let hasEndTime = (endComps.hour ?? 0) != 0 || (endComps.minute ?? 0) != 0
 
             let row: [String] = [
                 csvEscape(entry.title),
                 csvEscape(entry.location),
                 entry.diveType?.rawValue ?? "",
                 dateFormatter.string(from: entry.startDate),
-                dateFormatter.string(from: entry.endDate),
+                bottomTime > 0 ? "\(bottomTime)" : "",
+                hasStartTime ? timeFormatter.string(from: entry.startDate) : "",
+                hasEndTime ? timeFormatter.string(from: entry.endDate) : "",
                 depth > 0 ? String(format: "%.1f", depth) : "",
-                entry.visibility > 0 ? String(format: "%.1f", entry.visibility) : "",
+                formatOptionalFloat(entry.visibility),
+                entry.visibilityCategory?.rawValue ?? "",
                 entry.rating > 0 ? "\(entry.rating)" : "",
                 formatOptionalFloat(entry.weight),
                 entry.weightCategory?.rawValue ?? "",
@@ -293,7 +308,7 @@ struct SettingsView: View {
     private func findDuplicateTitles(in csvString: String) throws -> [String] {
         let rows = parseCSVRows(csvString)
         guard rows.count >= 2 else { throw CSVImportError.emptyFile }
-        guard rows[0].count == 27 else { throw CSVImportError.missingHeaders }
+        guard rows[0].count == 30 else { throw CSVImportError.missingHeaders }
 
         let existingTitles = Set(entries.map { $0.title })
         var duplicates: [String] = []
@@ -303,7 +318,7 @@ struct SettingsView: View {
             if fields.count == 1 && fields[0].trimmingCharacters(in: .whitespaces).isEmpty {
                 continue
             }
-            guard fields.count == 27 else { continue }
+            guard fields.count == 30 else { continue }
             let title = fields[0]
             if !title.isEmpty && existingTitles.contains(title) {
                 duplicates.append(title)
@@ -315,7 +330,7 @@ struct SettingsView: View {
 
     private func importCSV(_ csvString: String) throws -> Int {
         let rows = parseCSVRows(csvString)
-        let expectedColumnCount = 27
+        let expectedColumnCount = 30
 
         guard rows.count >= 2 else {
             throw CSVImportError.emptyFile
@@ -326,13 +341,17 @@ struct SettingsView: View {
             throw CSVImportError.missingHeaders
         }
 
-        // Detect metric vs imperial from the depth header (column 5)
-        let depthHeader = headerRow[5]
+        // Detect metric vs imperial from the depth header (column 7)
+        let depthHeader = headerRow[7]
         let fileIsImperial = depthHeader.contains("ft")
 
         let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyy-MM-dd HH:mm"
+        dateFormatter.dateFormat = "yyyy-MM-dd"
         dateFormatter.locale = Locale(identifier: "en_US_POSIX")
+
+        let timeFormatter = DateFormatter()
+        timeFormatter.dateFormat = "HH:mm"
+        timeFormatter.locale = Locale(identifier: "en_US_POSIX")
 
         // Build a set of existing titles for deduplication
         var existingTitles = Set(entries.map { $0.title })
@@ -354,6 +373,7 @@ struct SettingsView: View {
 
             let entry = Entry(timestamp: Date())
 
+            // Column 0: Title (with deduplication)
             let baseTitle = fields[0]
             if existingTitles.contains(baseTitle) {
                 var counter = 2
@@ -365,55 +385,85 @@ struct SettingsView: View {
                 entry.title = baseTitle
             }
             existingTitles.insert(entry.title)
+
+            // Column 1: Location
             entry.location = fields[1]
+            // Column 2: Dive Type
             entry.diveType = diveCategory(rawValue: fields[2])
 
+            // Column 3: Date (yyyy-MM-dd)
+            let calendar = Calendar.current
+            var diveDate = Date()
             if let date = dateFormatter.date(from: fields[3]) {
-                entry.startDate = date
+                diveDate = date
             } else if !fields[3].isEmpty {
                 throw CSVImportError.invalidDateFormat(value: fields[3], row: rowIndex + 1)
             }
 
-            if let date = dateFormatter.date(from: fields[4]) {
-                entry.endDate = date
-            } else if !fields[4].isEmpty {
-                throw CSVImportError.invalidDateFormat(value: fields[4], row: rowIndex + 1)
+            // Column 4: Bottom Time (min)
+            let bottomTimeMinutes = Int(fields[4]) ?? 0
+
+            // Column 5: Start Time (HH:mm, optional)
+            if !fields[5].isEmpty, let time = timeFormatter.date(from: fields[5]) {
+                let timeComps = calendar.dateComponents([.hour, .minute], from: time)
+                var dateComps = calendar.dateComponents([.year, .month, .day], from: diveDate)
+                dateComps.hour = timeComps.hour
+                dateComps.minute = timeComps.minute
+                entry.startDate = calendar.date(from: dateComps) ?? diveDate
+            } else {
+                entry.startDate = diveDate
             }
 
-            if let depthVal = Float(fields[5]) {
+            // Column 6: End Time (HH:mm, optional)
+            if !fields[6].isEmpty, let time = timeFormatter.date(from: fields[6]) {
+                let timeComps = calendar.dateComponents([.hour, .minute], from: time)
+                var dateComps = calendar.dateComponents([.year, .month, .day], from: diveDate)
+                dateComps.hour = timeComps.hour
+                dateComps.minute = timeComps.minute
+                entry.endDate = calendar.date(from: dateComps) ?? diveDate
+            } else {
+                entry.endDate = entry.startDate.addingTimeInterval(TimeInterval(bottomTimeMinutes * 60))
+            }
+
+            // Column 7: Max Depth
+            if let depthVal = Float(fields[7]) {
                 entry.maxDepth = fileIsImperial ? depthVal / 3.28084 : depthVal
             }
 
-            if let vis = Float(fields[6]) {
-                entry.visibility = vis
-            }
+            // Column 8: Visibility
+            entry.visibility = parseOptionalFloat(fields[8])
 
-            if let rat = Int(fields[7]) {
+            // Column 9: Visibility Rating
+            entry.visibilityCategory = visibilityRating(rawValue: fields[9])
+
+            // Column 10: Rating
+            if let rat = Int(fields[10]) {
                 entry.rating = rat
             }
 
-            entry.weight = parseOptionalFloat(fields[8])
-            entry.weightCategory = Weighting(rawValue: fields[9])
-            entry.tankSize = parseOptionalFloat(fields[10])
-            entry.tankMaterial = tankCategory(rawValue: fields[11])
-            entry.gasMixture = gasCategory(rawValue: fields[12])
-            entry.startPressure = parseOptionalFloat(fields[13])
-            entry.endPressure = parseOptionalFloat(fields[14])
-            entry.suitType = suitCategoryFromName(fields[15])
-            entry.waterType = waterCategory(rawValue: fields[16])
-            entry.waterBody = waterbodyCategory(rawValue: fields[17])
-            entry.waves = wavesCategory(rawValue: fields[18])
-            entry.current = currentCategory(rawValue: fields[19])
-            entry.surge = surgeCategory(rawValue: fields[20])
-            entry.airTemp = parseOptionalFloat(fields[21])
-            entry.surfTemp = parseOptionalFloat(fields[22])
-            entry.bottomTemp = parseOptionalFloat(fields[23])
-            entry.notes = fields[24]
+            // Columns 11-29
+            entry.weight = parseOptionalFloat(fields[11])
+            entry.weightCategory = Weighting(rawValue: fields[12])
+            entry.tankSize = parseOptionalFloat(fields[13])
+            entry.tankMaterial = tankCategory(rawValue: fields[14])
+            entry.gasMixture = gasCategory(rawValue: fields[15])
+            entry.startPressure = parseOptionalFloat(fields[16])
+            entry.endPressure = parseOptionalFloat(fields[17])
+            entry.suitType = suitCategoryFromName(fields[18])
+            entry.waterType = waterCategory(rawValue: fields[19])
+            entry.waterBody = waterbodyCategory(rawValue: fields[20])
+            entry.waves = wavesCategory(rawValue: fields[21])
+            entry.current = currentCategory(rawValue: fields[22])
+            entry.surge = surgeCategory(rawValue: fields[23])
+            entry.airTemp = parseOptionalFloat(fields[24])
+            entry.surfTemp = parseOptionalFloat(fields[25])
+            entry.bottomTemp = parseOptionalFloat(fields[26])
+            entry.notes = fields[27]
 
-            if let lat = Double(fields[25]) {
+            if let lat = Double(fields[28]) {
                 entry.latitude = lat
             }
-            if let lon = Double(fields[26]) {
+            if let lon = Double(fields[29]) {
                 entry.longitude = lon
             }
 

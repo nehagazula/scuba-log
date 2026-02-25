@@ -28,7 +28,8 @@ final class Entry {
     var waves: wavesCategory?
     var current: currentCategory?
     var surge: surgeCategory?
-    var visibility: Float = 0
+    var visibility: Float?
+    var visibilityCategory: visibilityRating?
     var notes: String = ""
     var rating: Int = 0
     var startPressure: Float?
@@ -52,7 +53,8 @@ final class Entry {
         self.maxDepth = 0
         self.weight = nil
         self.weightCategory = nil
-        self.visibility = 0.5
+        self.visibility = nil
+        self.visibilityCategory = nil
         self.notes = ""
         self.rating = 0
     }
@@ -62,6 +64,13 @@ enum diveCategory: String, CaseIterable, Codable, Identifiable {
     case shore
     case boat
     case other
+    var id: Self { self }
+}
+
+enum visibilityRating: String, CaseIterable, Codable, Identifiable {
+    case low
+    case average
+    case high
     var id: Self { self }
 }
 
@@ -84,6 +93,9 @@ enum gasCategory: String, CaseIterable, Codable, Identifiable {
     case eanx32
     case eanx36
     case eanx40
+    case enriched
+    case trimix
+    case rebreather
     var id: Self { self }
 }
 

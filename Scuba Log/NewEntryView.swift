@@ -36,8 +36,9 @@ struct ButtonView: View {
             let hasTitle = !newEntry.title.isEmpty
             let hasLocation = !newEntry.location.isEmpty
             let hasDepth = newEntry.maxDepth > 0
+            let hasBottomTime = newEntry.endDate > newEntry.startDate
 
-            return hasTitle && hasLocation && hasDepth
+            return hasTitle && hasLocation && hasDepth && hasBottomTime
         }
     
     var body: some View {
@@ -89,7 +90,12 @@ struct EditEntryView: View {
 
 struct EntryFormView: View {
     @Bindable var entry: Entry
-    
+
+    @State private var diveDate = Date()
+    @State private var bottomTimeMinutes: Int?
+    @State private var startTime = Date()
+    @State private var endTime = Date()
+
     var body: some View {
         TabView {
             // General
@@ -104,8 +110,22 @@ struct EntryFormView: View {
                     DiveTypeFormView(diveType:$entry.diveType, label: "Dive Type")
                 }
                 Section {
-                    DateFormView(date: $entry.startDate, label: "Start*")
-                    DateFormView(date:$entry.endDate, label: "End*")
+                    DatePicker("Date*", selection: $diveDate, displayedComponents: [.date])
+                        .datePickerStyle(.compact)
+                    HStack {
+                        Text("Bottom Time*")
+                            .frame(alignment: .leading)
+                        Spacer()
+                        TextField("0", value: $bottomTimeMinutes, format: .number)
+                            .multilineTextAlignment(.trailing)
+                            .keyboardType(.numberPad)
+                            .foregroundColor(.gray)
+                        Text("min")
+                    }
+                }
+                Section {
+                    DatePicker("Start Time", selection: $startTime, displayedComponents: [.hourAndMinute])
+                    DatePicker("End Time", selection: $endTime, displayedComponents: [.hourAndMinute])
                 }
                 Section {
                     DepthFormView(value: $entry.maxDepth, label: "Maximum Depth*")
@@ -137,7 +157,7 @@ struct EntryFormView: View {
                     WaterFormView(waterType: $entry.waterType, waterBody: $entry.waterBody, waves:  $entry.waves, current:  $entry.current, surge: $entry.surge)
                 }
                 Section {
-                    VisibilityFormView(visibility:  $entry.visibility)
+                    VisibilityFormView(visibility: $entry.visibility, visibilityCategory: $entry.visibilityCategory)
                 }
                 Section {
                     TemperatureFormView(surfTemp:  $entry.surfTemp, airTemp:  $entry.airTemp, bottomTemp:  $entry.bottomTemp)
@@ -161,6 +181,42 @@ struct EntryFormView: View {
         }
         .tabViewStyle(.page(indexDisplayMode: .always))
         .indexViewStyle(.page(backgroundDisplayMode: .always))
+        .onAppear { initializeDateState() }
+        .onChange(of: diveDate) { updateEntryDates() }
+        .onChange(of: bottomTimeMinutes) { updateEntryDates() }
+        .onChange(of: startTime) { updateEntryDates() }
+        .onChange(of: endTime) { updateEntryDates() }
+    }
+
+    private func initializeDateState() {
+        let calendar = Calendar.current
+        diveDate = calendar.startOfDay(for: entry.startDate)
+
+        // Only populate bottom time for existing entries (editing)
+        if !entry.title.isEmpty {
+            let diff = Int(entry.endDate.timeIntervalSince(entry.startDate) / 60)
+            bottomTimeMinutes = diff > 0 ? diff : nil
+        }
+
+        startTime = entry.startDate
+        endTime = entry.endDate
+    }
+
+    private func updateEntryDates() {
+        let calendar = Calendar.current
+        let dateComponents = calendar.dateComponents([.year, .month, .day], from: diveDate)
+
+        let startTimeComponents = calendar.dateComponents([.hour, .minute], from: startTime)
+        var startCombined = dateComponents
+        startCombined.hour = startTimeComponents.hour
+        startCombined.minute = startTimeComponents.minute
+        entry.startDate = calendar.date(from: startCombined) ?? diveDate
+
+        let endTimeComponents = calendar.dateComponents([.hour, .minute], from: endTime)
+        var endCombined = dateComponents
+        endCombined.hour = endTimeComponents.hour
+        endCombined.minute = endTimeComponents.minute
+        entry.endDate = calendar.date(from: endCombined) ?? diveDate
     }
 }
 
@@ -335,39 +391,36 @@ struct DiveTypeFormView: View {
     }
 }
 
-struct DateFormView: View {
-    @Binding var date: Date
-    var label: String
-    
-    var body: some View {
-        DatePicker(label, selection: $date, displayedComponents: [.date, .hourAndMinute])
-            .datePickerStyle(.compact)
-    }
-}
-
 struct DepthFormView: View {
     @Binding var value: Float
-//    @Binding var isMetric: Bool
     @AppStorage("isMetric") private var isMetric = true
     var label: String
-    
+
     let MetersToFeet: Float = 3.28084
+    @State private var depthInput: Float?
+
     var body: some View {
-        Section(header: Text(label)) {
-            Picker("Depth", selection: $value) {
-                if isMetric {
-                    ForEach(1..<100) { depth in
-                        Text("\(depth) meters")
-                            .tag(Float(depth))
-                    }
-                } else {
-                    ForEach(1..<300) { depth in
-                        Text("\(depth) feet")
-                            .tag(Float(depth) / MetersToFeet)
-                    }
-                }
+        let unit = isMetric ? "m" : "ft"
+        HStack {
+            Text(label)
+                .frame(alignment: .leading)
+            Spacer()
+            TextField("0", value: $depthInput, format: .number)
+                .multilineTextAlignment(.trailing)
+                .keyboardType(.decimalPad)
+            Text(unit)
+        }
+        .onAppear {
+            if value > 0 {
+                depthInput = isMetric ? value : value * MetersToFeet
             }
-            .pickerStyle(WheelPickerStyle())
+        }
+        .onChange(of: depthInput) {
+            if let input = depthInput {
+                value = isMetric ? input : input / MetersToFeet
+            } else {
+                value = 0
+            }
         }
     }
 }
@@ -704,22 +757,32 @@ struct TemperatureFormView: View {
 }
     
 
-// implements slider view
 struct VisibilityFormView: View {
-    @Binding var visibility: Float
-    
-    // to remove fraction digits
-    let numberFormatter: NumberFormatter = {
-        let num = NumberFormatter()
-        num.maximumFractionDigits = 0
-        return num
-    }()
-    
+    @Binding var visibility: Float?
+    @Binding var visibilityCategory: visibilityRating?
+    @AppStorage("isMetric") private var isMetric = true
+
     var body: some View {
-        VStack{
-            Slider(value: $visibility, in: 0...100)
-            Text("Visibility: \(numberFormatter.string(from: NSNumber(value: visibility))!)%")
+        let unit = isMetric ? "m" : "ft"
+        HStack {
+            Text("Visibility")
+                .frame(alignment: .leading)
+            Spacer()
+            TextField("0", value: $visibility, format: .number)
+                .multilineTextAlignment(.trailing)
+            Text(unit)
         }
+
+        VStack {
+            Picker("Visibility Rating",
+                   selection: $visibilityCategory) {
+                ForEach(visibilityRating.allCases) { rating in
+                    Text(rating.rawValue.capitalized)
+                        .tag(rating as visibilityRating?)
+                }
+            }
+        }
+        .pickerStyle(.segmented)
     }
 }
 

@@ -113,8 +113,14 @@ struct EntryView: View {
                         }
                         
                         EntryRow(label: "Dive Type", value: entry.diveType?.rawValue.capitalized)
-                        EntryRow(label: "Start", value: entry.startDate.formatted(.dateTime))
-                        EntryRow(label: "End", value: entry.endDate.formatted(.dateTime))
+                        EntryRow(label: "Date", value: entry.startDate.formatted(date: .abbreviated, time: .omitted))
+                        EntryRow(label: "Bottom Time", value: bottomTimeText)
+                        if hasStartTime {
+                            EntryRow(label: "Start Time", value: entry.startDate.formatted(date: .omitted, time: .shortened))
+                        }
+                        if hasEndTime {
+                            EntryRow(label: "End Time", value: entry.endDate.formatted(date: .omitted, time: .shortened))
+                        }
                         EntryRow(label: "Max Depth", value: depthText)
                     }
                 }
@@ -145,7 +151,8 @@ struct EntryView: View {
                         EntryRow(label: "Waves", value: entry.waves?.rawValue.capitalized)
                         EntryRow(label: "Current", value: entry.current?.rawValue.capitalized)
                         EntryRow(label: "Surge", value: entry.surge?.rawValue.capitalized)
-                        EntryRow(label: "Visibility", value: "\(Int(entry.visibility))%")
+                        EntryRow(label: "Visibility", value: visibilityText)
+                        EntryRow(label: "Visibility Rating", value: entry.visibilityCategory?.rawValue.capitalized)
                         EntryRow(label: "Air Temp", value: tempText(entry.airTemp))
                         EntryRow(label: "Surface Temp", value: tempText(entry.surfTemp))
                         EntryRow(label: "Bottom Temp", value: tempText(entry.bottomTemp))
@@ -197,6 +204,27 @@ struct EntryView: View {
     // Computed Display Texts
     var isMetric: Bool {
         UserDefaults.standard.bool(forKey: "isMetric")
+    }
+
+    var bottomTimeText: String {
+        let minutes = Int(entry.endDate.timeIntervalSince(entry.startDate) / 60)
+        return minutes > 0 ? "\(minutes) min" : "--"
+    }
+
+    var hasStartTime: Bool {
+        let comps = Calendar.current.dateComponents([.hour, .minute], from: entry.startDate)
+        return (comps.hour ?? 0) != 0 || (comps.minute ?? 0) != 0
+    }
+
+    var hasEndTime: Bool {
+        let comps = Calendar.current.dateComponents([.hour, .minute], from: entry.endDate)
+        return (comps.hour ?? 0) != 0 || (comps.minute ?? 0) != 0
+    }
+
+    var visibilityText: String {
+        guard let vis = entry.visibility else { return "--" }
+        let unit = isMetric ? "m" : "ft"
+        return "\(String(format: "%.1f", vis)) \(unit)"
     }
 
     var depthText: String {
